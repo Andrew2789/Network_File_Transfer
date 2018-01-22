@@ -1,7 +1,7 @@
 package Logic;
 
+import Controller.NftController;
 import Controller.SetupController;
-import Controller.TransferController;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -20,22 +20,17 @@ public class TransferThread extends Thread {
 	private static boolean exit = false;
 	private String ipAddress = null;
 	private int port, connectTimeout;
-	private SetupController setupController;
-	private TransferController transferController;
+	private NftController nftController;
 
-	public TransferThread(String ipAddress, int port, int timeout) {
+	public TransferThread(String ipAddress, int port, int timeout, NftController nftController) {
 		this.ipAddress = ipAddress;
 		this.port = port;
 		this.connectTimeout = timeout;
+		this.nftController = nftController;
 	}
 
 	public TransferThread(int port) {
 		this.port = port;
-	}
-
-	public void setControllers(SetupController setupController, TransferController transferController) {
-		this.setupController = setupController;
-		this.transferController = transferController;
 	}
 
 	public boolean setupDone() {
@@ -54,7 +49,7 @@ public class TransferThread extends Thread {
 				socket.connect(new InetSocketAddress(ipAddress, port), connectTimeout);
 			} catch (IOException e) {
 				socket = null;
-				setupController.clientConnectFailed();
+				//nftController.clientConnectFailed();
 				return;
 			}
 		} else {
@@ -64,7 +59,7 @@ public class TransferThread extends Thread {
 				serverSocket.bind(new InetSocketAddress("", port));
 			} catch (IOException e) {
 				serverSocket = null;
-				setupController.hostListenFailed();
+				//nftController.hostListenFailed();
 				return;
 			}
 		}
