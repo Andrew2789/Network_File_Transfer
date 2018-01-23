@@ -165,6 +165,8 @@ public class NftController implements Initializable {
         }
     }
 
+
+
     public void initialize(URL location, ResourceBundle resources) {
 		ipInput.setOnKeyPressed(event -> {
 			if (event.getCode() == KeyCode.ENTER) {
@@ -223,5 +225,16 @@ public class NftController implements Initializable {
                 connectButton.setDisable(!clientConnectReady());
             }
         });
+
+		TreeItem<String> root = new TreeItem<String>("DefaultDingo's Files");
+		root.setExpanded(true);
+		root.getChildren().addAll(
+			new TreeItem<String>("Item 1"),
+			new TreeItem<String>("Item 2"),
+			new TreeItem<String>("Item 3")
+		);
+		receivableTree.setRoot(root);
+
+		receivableTree.getRoot().getChildren().;
     }
 }
