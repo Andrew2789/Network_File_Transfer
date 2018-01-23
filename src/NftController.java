@@ -1,8 +1,10 @@
+import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.chart.LineChart;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -74,11 +76,13 @@ public class NftController implements Initializable {
     }
 
     public void connectFailed() {
-        connectionStatus.setText("Failed to connect");
-        connectButton.setDisable(false);
-        ipInput.setDisable(false);
-        setSettingsEnabled(true);
-        cancelButton.setVisible(false);
+		Platform.runLater(() -> {
+			connectionStatus.setText("Failed to connect");
+			connectButton.setDisable(false);
+			ipInput.setDisable(false);
+			setSettingsEnabled(true);
+			cancelButton.setVisible(false);
+		});
     }
 
     public void listenClicked() {
@@ -91,10 +95,12 @@ public class NftController implements Initializable {
     }
 
     public void listenFailed() {
-        connectionStatus.setText("Could not host that port");
-        listenButton.setDisable(false);
-        setSettingsEnabled(true);
-        cancelButton.setVisible(false);
+		Platform.runLater(() -> {
+			connectionStatus.setText("Could not host that port");
+			listenButton.setDisable(false);
+			setSettingsEnabled(true);
+			cancelButton.setVisible(false);
+		});
     }
 
     public void cancelClicked() {
@@ -160,22 +166,23 @@ public class NftController implements Initializable {
     }
 
     public void initialize(URL location, ResourceBundle resources) {
-        /**
-        client.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                if (clientConnectReady()) {
-                    clientConnectClicked();
-                }
-            }
-        });
+		ipInput.setOnKeyPressed(event -> {
+			if (event.getCode() == KeyCode.ENTER) {
+				if (clientConnectReady() && !hosting.isSelected()) {
+					connectClicked();
+				}
+			}
+		});
 
-        host.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                if (hostListenReady()) {
-                    hostListenClicked();
-                }
-            }
-        });**/
+		portInput.setOnKeyPressed(event -> {
+			if (event.getCode() == KeyCode.ENTER) {
+				if (clientConnectReady() && !hosting.isSelected()) {
+					connectClicked();
+				} else if (hostListenReady() && hosting.isSelected()) {
+					listenClicked();
+				}
+			}
+		});
 
         ipInput.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.isEmpty()) {
