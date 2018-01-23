@@ -1,8 +1,3 @@
-package Logic;
-
-import Controller.NftController;
-import Controller.SetupController;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -17,27 +12,28 @@ public class TransferThread extends Thread {
 	private ServerSocket serverSocket = null;
 	private static final int operationTimeout = 100;
 	private static final int chunkSize = 65536;
-	private static boolean exit = false;
+	private boolean exit = false;
 	private String ipAddress = null;
 	private int port, connectTimeout;
 	private NftController nftController;
 
-	public TransferThread(String ipAddress, int port, int timeout, NftController nftController) {
+	public TransferThread(String ipAddress, int port, NftController nftController) {
 		this.ipAddress = ipAddress;
 		this.port = port;
-		this.connectTimeout = timeout;
+		this.connectTimeout = 3;
 		this.nftController = nftController;
 	}
 
-	public TransferThread(int port) {
+	public TransferThread(int port, NftController nftController) {
 		this.port = port;
+		this.nftController = nftController;
 	}
 
 	public boolean setupDone() {
 		return socket != null && socket.isConnected();
 	}
 
-	public static void exit() {
+	public void exit() {
 		exit = true;
 	}
 
@@ -49,7 +45,8 @@ public class TransferThread extends Thread {
 				socket.connect(new InetSocketAddress(ipAddress, port), connectTimeout);
 			} catch (IOException e) {
 				socket = null;
-				//nftController.clientConnectFailed();
+				nftController.connectFailed();
+				System.out.println("confail");
 				return;
 			}
 		} else {
@@ -59,7 +56,7 @@ public class TransferThread extends Thread {
 				serverSocket.bind(new InetSocketAddress("", port));
 			} catch (IOException e) {
 				serverSocket = null;
-				//nftController.hostListenFailed();
+				nftController.listenFailed();
 				return;
 			}
 		}

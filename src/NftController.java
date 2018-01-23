@@ -1,26 +1,13 @@
-package Controller;
-
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.control.*;
-import javafx.scene.control.skin.ScrollPaneSkin;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
 
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class NftController implements Initializable {
-    @FXML
-    private ScrollPane settingsScroll;
-    @FXML
-    public GridPane settingsPane;
-
     //Session setup elements
     @FXML
     private TextField nicknameInput;
@@ -34,10 +21,14 @@ public class NftController implements Initializable {
     private CheckBox hosting;
     @FXML
     private Button connectButton;
+    @FXML
+    private Button listenButton;
 
     //Connection status elements
     @FXML
     private Label connectionStatus;
+    @FXML
+    private Button cancelButton;
 
     //Preferences elements
     @FXML
@@ -66,14 +57,67 @@ public class NftController implements Initializable {
     private static final int portMin = 1024;
     private static final int portMax = 65535;
 
+    private void setSettingsEnabled(boolean enabled) {
+        nicknameInput.setDisable(!enabled);
+        portInput.setDisable(!enabled);
+        hosting.setDisable(!enabled);
+    }
+
+    public void connectClicked() {
+        connectionStatus.setText("Connecting...");
+        connectButton.setDisable(true);
+        ipInput.setDisable(true);
+        setSettingsEnabled(false);
+        cancelButton.setVisible(true);
+        Main.transferThread = new TransferThread(ipInput.getCharacters().toString(), Integer.parseInt(portInput.getCharacters().toString()), this);
+        Main.transferThread.start();
+    }
+
+    public void connectFailed() {
+        connectionStatus.setText("Failed to connect");
+        connectButton.setDisable(false);
+        ipInput.setDisable(false);
+        setSettingsEnabled(true);
+        cancelButton.setVisible(false);
+    }
+
+    public void listenClicked() {
+        connectionStatus.setText("Listening...");
+        listenButton.setDisable(true);
+        setSettingsEnabled(false);
+        cancelButton.setVisible(true);
+        Main.transferThread = new TransferThread(Integer.parseInt(portInput.getCharacters().toString()), this);
+        Main.transferThread.start();
+    }
+
+    public void listenFailed() {
+        connectionStatus.setText("Could not host that port");
+        listenButton.setDisable(false);
+        setSettingsEnabled(true);
+        cancelButton.setVisible(false);
+    }
+
+    public void cancelClicked() {
+        Main.transferThread.exit();
+        if (hosting.isSelected()) {
+            listenButton.setDisable(false);
+            connectionStatus.setText("Listen attempt cancelled");
+        } else {
+            connectButton.setDisable(false);
+            connectionStatus.setText("Connect attempt cancelled");
+        }
+        cancelButton.setVisible(false);
+        setSettingsEnabled(true);
+    }
+
     public void hostingChanged() {
         ipInput.setDisable(hosting.isSelected());
+        connectButton.setVisible(!hosting.isSelected());
+        listenButton.setVisible(hosting.isSelected());
         if (hosting.isSelected()) {
-            connectButton.setText("Host");
-            connectPrompt.setText("Host on");
-            connectButton.setDisable(!hostListenReady());
+            connectPrompt.setText("Listen on");
+            listenButton.setDisable(!hostListenReady());
         } else {
-            connectButton.setText("Connect");
             connectPrompt.setText("Connect to");
             connectButton.setDisable(!clientConnectReady());
         }
@@ -167,7 +211,7 @@ public class NftController implements Initializable {
                 ((StringProperty)observable).setValue(oldValue);
             }
             if (hosting.isSelected()) {
-                connectButton.setDisable(!hostListenReady());
+                listenButton.setDisable(!hostListenReady());
             } else {
                 connectButton.setDisable(!clientConnectReady());
             }
