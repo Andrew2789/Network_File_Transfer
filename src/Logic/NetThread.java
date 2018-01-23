@@ -1,3 +1,7 @@
+package Logic;
+
+import GUI.NftController;
+import java.awt.SystemTray;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -6,25 +10,25 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
-public class TransferThread extends Thread {
-	private Thread t;
-	private Socket socket = null;
-	private ServerSocket serverSocket = null;
-	private static final int operationTimeout = 100;
-	private static final int chunkSize = 65536;
-	private boolean exit = false;
-	private String ipAddress = null;
-	private int port, connectTimeout;
-	private NftController nftController;
+public abstract class NetThread extends Thread {
+	protected Thread t;
+	protected Socket socket = null;
+	protected ServerSocket serverSocket = null;
+	protected static final int operationTimeout = 100;
+	protected static final int chunkSize = 65536;
+	protected boolean exit = false;
+	protected String ipAddress = null;
+	protected int port, connectTimeout;
+	protected NftController nftController;
 
-	public TransferThread(String ipAddress, int port, NftController nftController) {
+	public NetThread(String ipAddress, int port, NftController nftController) {
 		this.ipAddress = ipAddress;
 		this.port = port;
 		this.connectTimeout = 3;
 		this.nftController = nftController;
 	}
 
-	public TransferThread(int port, NftController nftController) {
+	public NetThread(int port, NftController nftController) {
 		this.port = port;
 		this.nftController = nftController;
 	}
@@ -37,6 +41,8 @@ public class TransferThread extends Thread {
 		exit = true;
 	}
 
+	abstract void afterConnection(DataInputStream inputStream, DataOutputStream outputStream);
+
 	public void run() {
 		if (ipAddress != null) {
 			try {
@@ -46,7 +52,6 @@ public class TransferThread extends Thread {
 			} catch (IOException e) {
 				socket = null;
 				nftController.connectFailed();
-				System.out.println("confail");
 				return;
 			}
 		} else {
@@ -71,7 +76,6 @@ public class TransferThread extends Thread {
 						socket = serverSocket.accept();
 						socket.setSoTimeout(operationTimeout);
 					} catch (SocketTimeoutException e) {
-						System.out.println("timeout");
 					}
 				}
 				if (exit) {
@@ -81,18 +85,7 @@ public class TransferThread extends Thread {
 
 			inputStream = new DataInputStream(socket.getInputStream());
 			outputStream = new DataOutputStream(socket.getOutputStream());
-			byte inputBuffer[] = new byte[chunkSize];
-
-			while (!exit) {
-				try {
-					outputStream.writeByte(5);
-					int a = inputStream.read(inputBuffer);
-					System.out.println(a);
-					System.out.println(inputBuffer[0]);
-				} catch (SocketTimeoutException e) {
-					System.out.println("timeout1");
-				}
-			}
+			afterConnection(inputStream, outputStream);
 
 		} catch (IOException e) {
 			e.printStackTrace();
