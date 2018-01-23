@@ -166,7 +166,7 @@
       						<Insets left="10.0" />
       					</GridPane.margin>
       				</CheckBox>
-      				<CheckBox fx:id="pref2" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Thing 2" GridPane.columnIndex="5" GridPane.rowIndex="2">
+      				<CheckBox fx:id="pref2" alignment="TOP_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Thing 2" GridPane.columnIndex="5" GridPane.rowIndex="2">
       					<font>
       						<Font size="14.0" />
       					</font>
@@ -212,6 +212,11 @@
       					</GridPane.margin>
       				</Label>
                   <Button fx:id="cancelButton" mnemonicParsing="false" onAction="#cancelClicked" text="Cancel" visible="false" GridPane.columnIndex="4" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="TOP">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Button>
+                  <Button fx:id="disconnectButton" mnemonicParsing="false" onAction="#disconnectClicked" text="Disconnect" visible="false" GridPane.columnIndex="4" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="TOP">
                      <font>
                         <Font size="16.0" />
                      </font>

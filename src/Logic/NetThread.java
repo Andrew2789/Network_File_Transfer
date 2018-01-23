@@ -85,6 +85,8 @@ public abstract class NetThread extends Thread {
 
 			inputStream = new DataInputStream(socket.getInputStream());
 			outputStream = new DataOutputStream(socket.getOutputStream());
+
+			nftController.connectOrListenSucceeded();
 			afterConnection(inputStream, outputStream);
 
 		} catch (IOException e) {

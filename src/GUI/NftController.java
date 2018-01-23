@@ -3,19 +3,17 @@ package GUI;
 import Logic.Main;
 import Logic.TransferControlThread;
 import Logic.TransferThread;
-import Model.Folder;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Queue;
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.chart.LineChart;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyCode;
-
 import java.net.URL;
 import java.util.ResourceBundle;
 import javax.swing.JFileChooser;
@@ -42,6 +40,8 @@ public class NftController implements Initializable {
     private Label connectionStatus;
     @FXML
     private Button cancelButton;
+    @FXML
+	private Button disconnectButton;
 
     //Preferences elements
     @FXML
@@ -75,15 +75,16 @@ public class NftController implements Initializable {
     @FXML
     private Button removeSendable;
 
-    private ArrayList<Folder> uploads;
-    private ArrayList<Folder> downloads;
-    private ArrayList<Folder> sendable;
-    private ArrayList<Folder> receivable;
+    private LinkedList<File> sendablesToSync = new LinkedList<>();
 
     private static final int portMin = 1024;
     private static final int portMax = 65534;
 
-    private void setSettingsEnabled(boolean enabled) {
+	public LinkedList<File> getSendablesToSync() {
+		return sendablesToSync;
+	}
+
+	private void setSettingsEnabled(boolean enabled) {
         nicknameInput.setDisable(!enabled);
         portInput.setDisable(!enabled);
         hosting.setDisable(!enabled);
@@ -101,7 +102,7 @@ public class NftController implements Initializable {
 		Main.transferControlThread.start();
     }
 
-    public void connectFailed() {
+	public void connectFailed() {
 		Platform.runLater(() -> {
 			connectionStatus.setText("Failed to connect");
 			connectButton.setDisable(false);
@@ -109,7 +110,18 @@ public class NftController implements Initializable {
 			setSettingsEnabled(true);
 			cancelButton.setVisible(false);
 		});
-    }
+	}
+
+	public void connectOrListenSucceeded() {
+		Platform.runLater(() -> {
+			connectionStatus.setText("Connected");
+			cancelButton.setVisible(false);
+			disconnectButton.setVisible(true);
+			uploadsTree.setDisable(false);
+			downloadsTree.setDisable(false);
+			receivableTree.setDisable(false);
+		});
+	}
 
     public void listenClicked() {
         connectionStatus.setText("Listening...");
@@ -144,6 +156,27 @@ public class NftController implements Initializable {
         cancelButton.setVisible(false);
         setSettingsEnabled(true);
     }
+
+    public void disconnectClicked() {
+		Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to disconnect?", ButtonType.YES, ButtonType.NO);
+		alert.showAndWait();
+
+		if (alert.getResult() == ButtonType.YES) {
+			Main.transferThread.exit();
+			Main.transferControlThread.exit();
+			connectionStatus.setText("Disconnected");
+			if (hosting.isSelected()) {
+				listenButton.setDisable(false);
+			} else {
+				connectButton.setDisable(false);
+			}
+			disconnectButton.setVisible(false);
+			uploadsTree.setDisable(true);
+			downloadsTree.setDisable(true);
+			receivableTree.setDisable(true);
+			setSettingsEnabled(true);
+		}
+	}
 
     public void hostingChanged() {
         ipInput.setDisable(hosting.isSelected());
@@ -209,24 +242,27 @@ public class NftController implements Initializable {
         int ret = chooser.showOpenDialog(null);
         if(ret == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
-            TreeItem newEntry;
             for (File file: files) {
                 if (file.isDirectory()) {
                     addSubfolders(sendableTree.getRoot(), file);
-                }
+                } else {
+                	sendableTree.getRoot().getChildren().add(new TreeItem<>(file.getName()));
+					sendablesToSync.add(file);
+				}
                 System.out.println(file.getName());
             }
         }
     }
 
     private void addSubfolders(TreeItem root, File folder) {
-        root.getChildren().add(new TreeItem(folder.getName()));
+        root.getChildren().add(new TreeItem<>(folder.getName()));
         if (folder.isDirectory()) {
             TreeItem newRoot = (TreeItem)root.getChildren().get(root.getChildren().size()-1);
             for (File file: folder.listFiles()) {
                 addSubfolders(newRoot, file);
             }
         }
+        sendablesToSync.add(folder);
     }
 
     public void sendableClicked() {
