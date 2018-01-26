@@ -14,7 +14,7 @@ public abstract class NetThread extends Thread {
 	protected Thread t;
 	protected Socket socket = null;
 	protected ServerSocket serverSocket = null;
-	protected static final int operationTimeout = 100;
+	protected static final int operationTimeout = 50;
 	protected static final int chunkSize = 65536;
 	protected boolean exit = false;
 	protected String ipAddress = null;
@@ -41,7 +41,7 @@ public abstract class NetThread extends Thread {
 		exit = true;
 	}
 
-	abstract void afterConnection(DataInputStream inputStream, DataOutputStream outputStream);
+	abstract void afterConnection(DataInputStream inputStream, DataOutputStream outputStream) throws InterruptedException, IOException;
 
 	public void run() {
 		if (ipAddress != null) {
@@ -89,7 +89,7 @@ public abstract class NetThread extends Thread {
 			nftController.connectOrListenSucceeded();
 			afterConnection(inputStream, outputStream);
 
-		} catch (IOException e) {
+		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
 

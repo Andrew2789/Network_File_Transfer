@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 public class Main extends Application {
     private static TransferThread transferThread = null;
     private static TransferControlThread transferControlThread = null;
-    private static int nextSendableRootId = 0;
+    private static int nextSendableRootId = -1;
 
     public static void clientTransferThreads(String ip, int lowerPort, NftController nftController) {
         transferThread = new TransferThread(ip, lowerPort, nftController);
@@ -34,12 +34,13 @@ public class Main extends Application {
         transferControlThread = null;
     }
 
-    public static int getNextSendableRootId() {
+    public static int getNextSendableRootId(boolean increment) {
+        if (increment) {
+            nextSendableRootId++;
+            if (transferControlThread != null)
+                transferControlThread.sendableAdded();
+        }
         return nextSendableRootId;
-    }
-
-    public static void incrementNextSendableRootId() {
-        nextSendableRootId++;
     }
 
     @Override

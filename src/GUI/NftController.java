@@ -1,15 +1,18 @@
 package GUI;
 
 import Logic.Main;
+import Logic.RootTreeItem;
 import Logic.TransferControlThread;
 import Logic.TransferThread;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.chart.LineChart;
@@ -77,14 +80,15 @@ public class NftController implements Initializable {
     @FXML
     private Button removeSendable;
 
-    private LinkedList<File> sendablesToSync = new LinkedList<>();
-
     private static final int portMin = 1024;
     private static final int portMax = 65534;
 
-    public Map<Integer, Path> sendableRootPaths;
-	public LinkedList<File> getSendablesToSync() {
-		return sendablesToSync;
+    public ObservableList getSendables() {
+    	return sendableTree.getRoot().getChildren();
+	}
+
+	public void addReceivable(RootTreeItem newReceivable) {
+    	receivableTree.getRoot().getChildren().add(newReceivable);
 	}
 
 	private void setSettingsEnabled(boolean enabled) {
@@ -237,27 +241,28 @@ public class NftController implements Initializable {
         int ret = chooser.showOpenDialog(null);
         if(ret == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
-            for (File file: files) {
-                if (file.isDirectory()) {
-                    addSubfolders(sendableTree.getRoot(), file);
-                } else {
-                	sendableTree.getRoot().getChildren().add(new TreeItem<>(file.getName()));
-					sendablesToSync.add(file);
+            synchronized (sendableTree) {
+				for (File file : files) {
+					RootTreeItem newItem = new RootTreeItem(file, Main.getNextSendableRootId(true));
+					sendableTree.getRoot().getChildren().add(newItem);
+					if (file.isDirectory()) {
+						for (File child : file.listFiles()) {
+							addSubfolders(newItem, child);
+						}
+					}
 				}
-                System.out.println(file.getName());
-            }
+			}
         }
     }
 
     private void addSubfolders(TreeItem root, File folder) {
-        root.getChildren().add(new TreeItem<>(folder.getName()));
+		TreeItem newItem = new TreeItem<>(folder.getName());
+		root.getChildren().add(newItem);
         if (folder.isDirectory()) {
-            TreeItem newRoot = (TreeItem)root.getChildren().get(root.getChildren().size()-1);
             for (File file: folder.listFiles()) {
-                addSubfolders(newRoot, file);
+                addSubfolders(newItem, file);
             }
         }
-        sendablesToSync.add(folder);
     }
 
     public void sendableClicked() {
@@ -265,8 +270,10 @@ public class NftController implements Initializable {
 	}
 
     public void deleteSelectedSendable() {
-        TreeItem toRemove = (TreeItem)sendableTree.getSelectionModel().getSelectedItem();
-		toRemove.getParent().getChildren().remove(toRemove);
+		synchronized (sendableTree) {
+			TreeItem toRemove = (TreeItem)sendableTree.getSelectionModel().getSelectedItem();
+			toRemove.getParent().getChildren().remove(toRemove);
+		}
 		sendableTree.getSelectionModel().clearSelection();
         removeSendable.setDisable(true);
     }

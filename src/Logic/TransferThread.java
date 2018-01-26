@@ -29,8 +29,6 @@ public class TransferThread extends NetThread {
 				try {
 					outputStream.writeByte(5);
 					int a = inputStream.read(inputBuffer);
-					System.out.println(a);
-					System.out.println(inputBuffer[0]);
 				} catch (SocketTimeoutException e) {
 					System.out.println("timeout1");
 				}

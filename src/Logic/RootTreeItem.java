@@ -6,20 +6,23 @@ import java.io.File;
 
 public class RootTreeItem extends TreeItem {
 	private int id;
-	private File file;
 
 	public RootTreeItem(File file, int id) {
-		super(file.getName());
+		super(file.getAbsolutePath());
 		this.id = id;
-		this.file = file;
+	}
+
+	public RootTreeItem(String path, int id) {
+		super(path);
+		this.id = id;
 	}
 
 	public void setId(int id) {
 		this.id = id;
 	}
 
-	public File getFile() {
-		return file;
+	public String getPath() {
+		return (String)getValue();
 	}
 
 	public int getId() {
