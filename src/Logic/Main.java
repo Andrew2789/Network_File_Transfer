@@ -1,5 +1,6 @@
 package Logic;
 
+import GUI.NftController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -8,8 +9,38 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-    public static TransferThread transferThread = null;
-    public static TransferControlThread transferControlThread = null;
+    private static TransferThread transferThread = null;
+    private static TransferControlThread transferControlThread = null;
+    private static int nextSendableRootId = 0;
+
+    public static void clientTransferThreads(String ip, int lowerPort, NftController nftController) {
+        transferThread = new TransferThread(ip, lowerPort, nftController);
+        transferControlThread = new TransferControlThread(ip, lowerPort+1, nftController);
+        transferThread.start();
+        transferControlThread.start();
+    }
+
+    public static void hostTransferThreads(int lowerPort, NftController nftController) {
+        transferThread = new TransferThread(lowerPort, nftController);
+        transferControlThread = new TransferControlThread(lowerPort+1, nftController);
+        transferThread.start();
+        transferControlThread.start();
+    }
+
+    public static void killTransferThreads() {
+        transferThread.exit();
+        transferControlThread.exit();
+        transferThread = null;
+        transferControlThread = null;
+    }
+
+    public static int getNextSendableRootId() {
+        return nextSendableRootId;
+    }
+
+    public static void incrementNextSendableRootId() {
+        nextSendableRootId++;
+    }
 
     @Override
     public void start(Stage primaryStage) throws Exception {

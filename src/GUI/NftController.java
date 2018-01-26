@@ -4,7 +4,9 @@ import Logic.Main;
 import Logic.TransferControlThread;
 import Logic.TransferThread;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
@@ -80,6 +82,7 @@ public class NftController implements Initializable {
     private static final int portMin = 1024;
     private static final int portMax = 65534;
 
+    public Map<Integer, Path> sendableRootPaths;
 	public LinkedList<File> getSendablesToSync() {
 		return sendablesToSync;
 	}
@@ -96,10 +99,7 @@ public class NftController implements Initializable {
         ipInput.setDisable(true);
         setSettingsEnabled(false);
         cancelButton.setVisible(true);
-		Main.transferThread = new TransferThread(ipInput.getCharacters().toString(), Integer.parseInt(portInput.getCharacters().toString()), this);
-		Main.transferControlThread = new TransferControlThread(ipInput.getCharacters().toString(), Integer.parseInt(portInput.getCharacters().toString())+1, this);
-		Main.transferThread.start();
-		Main.transferControlThread.start();
+        Main.clientTransferThreads(ipInput.getCharacters().toString(), Integer.parseInt(portInput.getCharacters().toString()), this);
     }
 
 	public void connectFailed() {
@@ -128,10 +128,7 @@ public class NftController implements Initializable {
         listenButton.setDisable(true);
         setSettingsEnabled(false);
         cancelButton.setVisible(true);
-		Main.transferThread = new TransferThread(Integer.parseInt(portInput.getCharacters().toString()), this);
-		Main.transferControlThread = new TransferControlThread(Integer.parseInt(portInput.getCharacters().toString())+1, this);
-		Main.transferThread.start();
-		Main.transferControlThread.start();
+		Main.hostTransferThreads(Integer.parseInt(portInput.getCharacters().toString()), this);
     }
 
     public void listenFailed() {
@@ -144,8 +141,7 @@ public class NftController implements Initializable {
     }
 
     public void cancelClicked() {
-		Main.transferThread.exit();
-		Main.transferControlThread.exit();
+		Main.killTransferThreads();
         if (hosting.isSelected()) {
             listenButton.setDisable(false);
             connectionStatus.setText("Listen attempt cancelled");
@@ -162,8 +158,7 @@ public class NftController implements Initializable {
 		alert.showAndWait();
 
 		if (alert.getResult() == ButtonType.YES) {
-			Main.transferThread.exit();
-			Main.transferControlThread.exit();
+			Main.killTransferThreads();
 			connectionStatus.setText("Disconnected");
 			if (hosting.isSelected()) {
 				listenButton.setDisable(false);
