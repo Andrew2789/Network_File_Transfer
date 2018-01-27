@@ -1,15 +1,8 @@
 package GUI;
 
+import Logic.FileTreeItem;
 import Logic.Main;
-import Logic.RootTreeItem;
-import Logic.TransferControlThread;
-import Logic.TransferThread;
 import java.io.File;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
@@ -87,8 +80,8 @@ public class NftController implements Initializable {
     	return sendableTree.getRoot().getChildren();
 	}
 
-	public void addReceivable(RootTreeItem newReceivable) {
-    	receivableTree.getRoot().getChildren().add(newReceivable);
+	public ObservableList getReceivables() {
+    	return receivableTree.getRoot().getChildren();
 	}
 
 	private void setSettingsEnabled(boolean enabled) {
@@ -243,7 +236,7 @@ public class NftController implements Initializable {
             File[] files = chooser.getSelectedFiles();
             synchronized (sendableTree) {
 				for (File file : files) {
-					RootTreeItem newItem = new RootTreeItem(file, Main.getNextSendableRootId(true));
+					FileTreeItem newItem = new FileTreeItem(file, Main.getNextSendableRootId(true));
 					sendableTree.getRoot().getChildren().add(newItem);
 					if (file.isDirectory()) {
 						for (File child : file.listFiles()) {
@@ -255,8 +248,8 @@ public class NftController implements Initializable {
         }
     }
 
-    private void addSubfolders(TreeItem root, File folder) {
-		TreeItem newItem = new TreeItem<>(folder.getName());
+    private void addSubfolders(FileTreeItem root, File folder) {
+		FileTreeItem newItem = new FileTreeItem(folder);
 		root.getChildren().add(newItem);
         if (folder.isDirectory()) {
             for (File file: folder.listFiles()) {
@@ -271,8 +264,9 @@ public class NftController implements Initializable {
 
     public void deleteSelectedSendable() {
 		synchronized (sendableTree) {
-			TreeItem toRemove = (TreeItem)sendableTree.getSelectionModel().getSelectedItem();
+			FileTreeItem toRemove = (FileTreeItem)sendableTree.getSelectionModel().getSelectedItem();
 			toRemove.getParent().getChildren().remove(toRemove);
+			Main.sendableRemoved(toRemove);
 		}
 		sendableTree.getSelectionModel().clearSelection();
         removeSendable.setDisable(true);

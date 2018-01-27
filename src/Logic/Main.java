@@ -43,6 +43,10 @@ public class Main extends Application {
         return nextSendableRootId;
     }
 
+    public static void sendableRemoved(FileTreeItem removed) {
+        transferControlThread.sendableRemoved(removed);
+    }
+
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/GUI/nft.fxml"));
