@@ -24,6 +24,7 @@ public class TransferThread extends NetThread {
 		System.out.println("Transfer thread connected");
 		byte inputBuffer[] = new byte[chunkSize];
 
+		/*
 		while (!exit) {
 			try {
 				try {
@@ -36,7 +37,7 @@ public class TransferThread extends NetThread {
 				System.out.println("IO Exception!");
 				e.printStackTrace();
 			}
-		}
+		}*/
 		System.out.println("Exiting transfer thread");
 	}
 }

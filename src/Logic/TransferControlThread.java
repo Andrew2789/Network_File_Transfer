@@ -24,6 +24,9 @@ public class TransferControlThread extends NetThread {
 	}
 
 	private void sendNewSendables(DataOutputStream outputStream) throws IOException {
+		if (nftController.getSendables().size() == 0)
+			return;
+
 		int treeIndex = 0;
 		LinkedList<FileTreeItem> toCommunicate = new LinkedList<>();
 		synchronized (nftController.getSendables()) {
@@ -109,7 +112,10 @@ public class TransferControlThread extends NetThread {
 				if (removedSendable.isRoot()) {
 					outputStream.writeInt(removedSendable.getId());
 				} else {
-
+					FileTreeItem parent = (FileTreeItem)removedSendable.getParent();
+					while (!parent.isRoot()) {
+						parent = (FileTreeItem)parent.getParent();
+					}
 				}
 			}
 		}
