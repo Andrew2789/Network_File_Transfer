@@ -8,6 +8,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.util.LinkedList;
+
 public class Main extends Application {
     private static TransferThread transferThread = null;
     private static TransferControlThread transferControlThread = null;
@@ -43,8 +45,8 @@ public class Main extends Application {
         return nextSendableRootId;
     }
 
-    public static void sendableRemoved(FileTreeItem removed) {
-        transferControlThread.sendableRemoved(removed);
+    public static void sendableRemoved(int id, LinkedList<String> removedSendablePath) {
+        transferControlThread.sendableRemoved(id, removedSendablePath);
     }
 
     @Override
@@ -54,8 +56,8 @@ public class Main extends Application {
         Scene scene = new Scene(root, 1366, 768);
         scene.getStylesheets().add(getClass().getResource("/GUI/dark.css").toExternalForm());
         primaryStage.setScene(scene);
-        primaryStage.setMinWidth(800);
-        primaryStage.setMinHeight(430);
+        //primaryStage.setMinWidth(800);
+        //primaryStage.setMinHeight(430);
         primaryStage.show();
     }
 

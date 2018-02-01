@@ -6,14 +6,17 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import javafx.collections.ObservableList;
+import javafx.scene.control.TreeItem;
 
 public class TransferControlThread extends NetThread {
 
 	private boolean sendablesAdded = true, sendablesRemoved = false;
 	private int nextSendableId = 0;
-	private LinkedList<FileTreeItem> removedSendableIds = new LinkedList<>();
+	private LinkedHashMap<Integer, LinkedList<String>> removedSendables = new LinkedHashMap<>();
 
 	public TransferControlThread(String ipAddress, int port, NftController nftController) {
 		super(ipAddress, port, nftController);
@@ -28,32 +31,28 @@ public class TransferControlThread extends NetThread {
 			return;
 
 		int treeIndex = 0;
-		LinkedList<FileTreeItem> toCommunicate = new LinkedList<>();
 		synchronized (nftController.getSendables()) {
 			ObservableList sendables = nftController.getSendables();
 			int sendableLength = sendables.size();
 			while (((FileTreeItem) sendables.get(treeIndex)).getId() < nextSendableId && treeIndex < sendableLength) {
 				treeIndex++;
 			}
+			FileTreeItem rootTreeItem;
 			while (treeIndex < sendableLength) {
-				toCommunicate.add((FileTreeItem) sendables.get(treeIndex));
+				rootTreeItem = (FileTreeItem) sendables.get(treeIndex);
+
+				outputStream.writeInt(1); //opcode
+				//root node info
+				outputStream.writeInt(rootTreeItem.getId());
+				outputStream.writeBoolean(rootTreeItem.isFolder());
+				outputStream.writeUTF(rootTreeItem.getName());
+				if (rootTreeItem.isFolder()) {
+					outputStream.writeInt(rootTreeItem.getChildren().size());
+					sendSubfolders(rootTreeItem, outputStream);
+				}
 				treeIndex++;
 			}
-		}
-		nextSendableId = toCommunicate.getLast().getId() + 1;
-
-		for (FileTreeItem rootTreeItem : toCommunicate) {
-			outputStream.writeInt(1); //opcode
-
-			//root node info
-			outputStream.writeInt(rootTreeItem.getId());
-			outputStream.writeBoolean(rootTreeItem.isFolder());
-			outputStream.writeUTF(rootTreeItem.getIdentifier());
-
-			if (rootTreeItem.isFolder()) {
-				outputStream.writeInt(rootTreeItem.getChildren().size());
-				sendSubfolders(rootTreeItem, outputStream);
-			}
+			nextSendableId = ((FileTreeItem) sendables.get(treeIndex-1)).getId() + 1;
 		}
 		sendablesAdded = false;
 	}
@@ -63,10 +62,11 @@ public class TransferControlThread extends NetThread {
 		for (Object child : parent.getChildren()) {
 			currentItem = (FileTreeItem) child;
 			outputStream.writeBoolean(currentItem.isFolder());
-			outputStream.writeUTF(currentItem.getIdentifier());
+			outputStream.writeUTF(currentItem.getName());
 			if (currentItem.isFolder()) {
 				outputStream.writeInt(currentItem.getChildren().size());
 				sendSubfolders(currentItem, outputStream);
+				System.out.println(currentItem.getName());
 			}
 		}
 	}
@@ -82,9 +82,8 @@ public class TransferControlThread extends NetThread {
 			recvSubfolders(newReceivable, children, inputStream);
 		}
 		synchronized (nftController.getReceivables()) {
-
+			nftController.getReceivables().add(newReceivable);
 		}
-		nftController.getReceivables().add(newReceivable);
 	}
 
 	private void recvSubfolders(FileTreeItem parent, int fileCount, DataInputStream inputStream) throws IOException {
@@ -101,20 +100,21 @@ public class TransferControlThread extends NetThread {
 				recvSubfolders(newItem, children, inputStream);
 			}
 			parent.getChildren().add(newItem);
+			System.out.println(newItem.getName());
 		}
 	}
 
 	private void sendRemovedSendables(DataOutputStream outputStream) throws IOException {
-		synchronized (removedSendableIds) {
-			for (FileTreeItem removedSendable : removedSendableIds) {
+		synchronized (removedSendables) {
+			for (int id: removedSendables.keySet()) {
 				outputStream.writeInt(2); //opcode
-				outputStream.writeBoolean(removedSendable.isRoot());
-				if (removedSendable.isRoot()) {
-					outputStream.writeInt(removedSendable.getId());
+				outputStream.writeInt(id);
+				if (removedSendables.get(id).size() == 1) {
+					outputStream.writeBoolean(true);
 				} else {
-					FileTreeItem parent = (FileTreeItem)removedSendable.getParent();
-					while (!parent.isRoot()) {
-						parent = (FileTreeItem)parent.getParent();
+					outputStream.writeBoolean(false);
+					for (String pathItem : removedSendables.get(id)) {
+						outputStream.writeUTF(pathItem);
 					}
 				}
 			}
@@ -183,10 +183,10 @@ public class TransferControlThread extends NetThread {
 		sendablesAdded = true;
 	}
 
-	public void sendableRemoved(FileTreeItem removed) {
+	public void sendableRemoved(int id, LinkedList<String> removedSendablePath) {
 		sendablesRemoved = true;
-		synchronized (removedSendableIds) {
-			removedSendableIds.add(removed);
+		synchronized (removedSendables) {
+			removedSendables.put(id, removedSendablePath);
 		}
 	}
 }

@@ -13,6 +13,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyCode;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.ResourceBundle;
 import javax.swing.JFileChooser;
 
@@ -265,8 +266,23 @@ public class NftController implements Initializable {
     public void deleteSelectedSendable() {
 		synchronized (sendableTree) {
 			FileTreeItem toRemove = (FileTreeItem)sendableTree.getSelectionModel().getSelectedItem();
+			LinkedList<FileTreeItem> path = new LinkedList<>();
+			path.addFirst((FileTreeItem)toRemove.getParent());
+			while (path.getFirst() != null && !path.getFirst().isRoot()) {
+				path.addFirst((FileTreeItem)path.getFirst().getParent());
+			}
+			if (path.getFirst() == null) {
+				System.err.println("Got removed sendable parent as null: " + toRemove.getName());
+				System.err.println("Not sending removed sendable info to peer. Check for possible desync.");
+			} else {
+				LinkedList<String> pathString = new LinkedList<>();
+				for (FileTreeItem fileTreeItem : path) {
+					pathString.add(fileTreeItem.getName());
+				}
+				Main.sendableRemoved(path.getFirst().getId(), pathString);
+			}
+
 			toRemove.getParent().getChildren().remove(toRemove);
-			Main.sendableRemoved(toRemove);
 		}
 		sendableTree.getSelectionModel().clearSelection();
         removeSendable.setDisable(true);
