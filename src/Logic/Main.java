@@ -39,10 +39,13 @@ public class Main extends Application {
     public static int getNextSendableRootId(boolean increment) {
         if (increment) {
             nextSendableRootId++;
-            if (transferControlThread != null)
-                transferControlThread.sendableAdded();
         }
         return nextSendableRootId;
+    }
+
+    public static void sendableAdded() {
+        if (transferControlThread != null)
+            transferControlThread.sendableAdded();
     }
 
     public static void sendableRemoved(int id, LinkedList<String> removedSendablePath) {
@@ -54,7 +57,7 @@ public class Main extends Application {
         Parent root = FXMLLoader.load(getClass().getResource("/GUI/nft.fxml"));
         primaryStage.setTitle("Network File Transfer");
         Scene scene = new Scene(root, 1366, 768);
-        scene.getStylesheets().add(getClass().getResource("/GUI/dark.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/GUI/steelblue.css").toExternalForm());
         primaryStage.setScene(scene);
         //primaryStage.setMinWidth(800);
         //primaryStage.setMinHeight(430);

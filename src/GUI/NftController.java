@@ -235,7 +235,7 @@ public class NftController implements Initializable {
         int ret = chooser.showOpenDialog(null);
         if(ret == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
-            synchronized (sendableTree) {
+            synchronized (sendableTree.getRoot().getChildren()) {
 				for (File file : files) {
 					FileTreeItem newItem = new FileTreeItem(file, Main.getNextSendableRootId(true));
 					sendableTree.getRoot().getChildren().add(newItem);
@@ -246,6 +246,7 @@ public class NftController implements Initializable {
 					}
 				}
 			}
+			Main.sendableAdded();
         }
     }
 
@@ -283,8 +284,8 @@ public class NftController implements Initializable {
 			}
 
 			toRemove.getParent().getChildren().remove(toRemove);
+			sendableTree.getSelectionModel().clearSelection();
 		}
-		sendableTree.getSelectionModel().clearSelection();
         removeSendable.setDisable(true);
     }
 

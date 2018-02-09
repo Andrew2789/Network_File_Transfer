@@ -51,6 +51,7 @@ public class TransferControlThread extends NetThread {
 					sendSubfolders(rootTreeItem, outputStream);
 				}
 				treeIndex++;
+				System.out.println("Finished sending " + rootTreeItem.getName());
 			}
 			nextSendableId = ((FileTreeItem) sendables.get(treeIndex-1)).getId() + 1;
 		}
@@ -59,14 +60,15 @@ public class TransferControlThread extends NetThread {
 
 	private void sendSubfolders(FileTreeItem parent, DataOutputStream outputStream) throws IOException {
 		FileTreeItem currentItem;
+		System.out.println(String.format("Sending folder %s subitems %d", parent.getName(), parent.getChildren().size()));
 		for (Object child : parent.getChildren()) {
 			currentItem = (FileTreeItem) child;
+			System.out.println(String.format("Sending subitem %s from %s", currentItem.getName(), parent.getName()));
 			outputStream.writeBoolean(currentItem.isFolder());
 			outputStream.writeUTF(currentItem.getName());
 			if (currentItem.isFolder()) {
 				outputStream.writeInt(currentItem.getChildren().size());
 				sendSubfolders(currentItem, outputStream);
-				System.out.println(currentItem.getName());
 			}
 		}
 	}
@@ -83,6 +85,7 @@ public class TransferControlThread extends NetThread {
 		}
 		synchronized (nftController.getReceivables()) {
 			nftController.getReceivables().add(newReceivable);
+			System.out.println("Finished receiving " + newReceivable.getName());
 		}
 	}
 
@@ -91,16 +94,17 @@ public class TransferControlThread extends NetThread {
 		String name;
 		int children;
 		FileTreeItem newItem;
+		System.out.println(String.format("Receiving folder %s subitems %d", parent.getName(), fileCount));
 		for (int i = 0; i < fileCount; i++) {
 			folder = inputStream.readBoolean();
 			name = inputStream.readUTF();
 			newItem = new FileTreeItem(name, folder);
+			System.out.println(String.format("Receiving subitem %s from %s", newItem.getName(), parent.getName()));
 			if (folder) {
 				children = inputStream.readInt();
 				recvSubfolders(newItem, children, inputStream);
 			}
 			parent.getChildren().add(newItem);
-			System.out.println(newItem.getName());
 		}
 	}
 

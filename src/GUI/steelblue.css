@@ -1,0 +1,47 @@
+#backPane {
+  -fx-background-color: lightsteelblue;
+}
+
+.scroll-pane {
+   -fx-background-color: transparent;
+}
+
+.scroll-pane > .viewport {
+   -fx-background-color: transparent;
+}
+
+.button {
+    -fx-background-color: steelblue;
+    -fx-text-fill: white;
+}
+
+.text-field {
+    -fx-background-color: steelblue;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: lightgrey;
+}
+
+.text-field:focused {
+    -fx-background-color: #5490c2;
+}
+
+.text-field .prev {
+    -fx-background-color: steelblue;
+    -fx-text-fill: white;
+}
+
+.check-box .box {
+    -fx-background-color: steelblue;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+.separator {
+    -fx-background-color: transparent;
+}
+
+.separator .line {
+    -fx-background-color: steelblue;
+}
