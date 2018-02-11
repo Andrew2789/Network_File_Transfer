@@ -82,7 +82,15 @@ public class NftController implements Initializable {
 	}
 
 	public ObservableList getReceivables() {
-    	return receivableTree.getRoot().getChildren();
+		return receivableTree.getRoot().getChildren();
+	}
+
+	public ObservableList getDownloads() {
+		return downloadsTree.getRoot().getChildren();
+	}
+
+	public ObservableList getUploads() {
+		return uploadsTree.getRoot().getChildren();
 	}
 
 	private void setSettingsEnabled(boolean enabled) {
@@ -220,14 +228,6 @@ public class NftController implements Initializable {
         }
     }
 
-    public void queueSelectedForDownload() {
-
-    }
-
-    public void cancelSelectedDownload() {
-
-    }
-
     public void newSendable() {
         JFileChooser chooser = new JFileChooser(".");
         chooser.setMultiSelectionEnabled(true);
@@ -237,7 +237,7 @@ public class NftController implements Initializable {
             File[] files = chooser.getSelectedFiles();
             synchronized (sendableTree.getRoot().getChildren()) {
 				for (File file : files) {
-					FileTreeItem newItem = new FileTreeItem(file, Main.getNextSendableRootId(true));
+					FileTreeItem newItem = new FileTreeItem(file, Main.getNextSendableRootId());
 					sendableTree.getRoot().getChildren().add(newItem);
 					if (file.isDirectory()) {
 						for (File child : file.listFiles()) {
@@ -265,10 +265,10 @@ public class NftController implements Initializable {
 	}
 
     public void deleteSelectedSendable() {
-		synchronized (sendableTree) {
+		synchronized (sendableTree.getRoot().getChildren()) {
 			FileTreeItem toRemove = (FileTreeItem)sendableTree.getSelectionModel().getSelectedItem();
 			LinkedList<FileTreeItem> path = new LinkedList<>();
-			path.addFirst((FileTreeItem)toRemove.getParent());
+			path.addFirst(toRemove);
 			while (path.getFirst() != null && !path.getFirst().isRoot()) {
 				path.addFirst((FileTreeItem)path.getFirst().getParent());
 			}
@@ -288,6 +288,26 @@ public class NftController implements Initializable {
 		}
         removeSendable.setDisable(true);
     }
+
+	public void receivableClicked() {
+		queueDownload.setDisable(receivableTree.getSelectionModel().getSelectedItem() == null);
+	}
+
+	public void queueSelectedForDownload() {
+		synchronized (downloadsTree.getRoot().getChildren()) {
+			synchronized (receivableTree.getRoot().getChildren()) {
+				FileTreeItem toQueue = (FileTreeItem) receivableTree.getSelectionModel().getSelectedItem();
+				downloadsTree.getRoot().getChildren().add(toQueue.makeReceivableCopy(Main.getNextDownloadRootId()));
+				receivableTree.getSelectionModel().clearSelection();
+			}
+		}
+		Main.downloadQueued();
+		queueDownload.setDisable(true);
+	}
+
+	public void cancelSelectedDownload() {
+
+	}
 
     public void initialize(URL location, ResourceBundle resources) {
 		ipInput.setOnKeyPressed(event -> {

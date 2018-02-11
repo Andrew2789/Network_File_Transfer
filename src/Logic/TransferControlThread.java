@@ -14,8 +14,8 @@ import javafx.scene.control.TreeItem;
 
 public class TransferControlThread extends NetThread {
 
-	private boolean sendablesAdded = true, sendablesRemoved = false;
-	private int nextSendableId = 0;
+	private boolean sendablesAdded = true, sendablesRemoved = false, downloadsQueued = false, downloadsDequeued = false;
+	private int nextSendableId = 0, nextDownloadId = 0;
 	private LinkedHashMap<Integer, LinkedList<String>> removedSendables = new LinkedHashMap<>();
 
 	public TransferControlThread(String ipAddress, int port, NftController nftController) {
@@ -77,8 +77,8 @@ public class TransferControlThread extends NetThread {
 		//root node info
 		int id = inputStream.readInt();
 		boolean folder = inputStream.readBoolean();
-		String path = inputStream.readUTF();
-		FileTreeItem newReceivable = new FileTreeItem(path, folder, id);
+		String name = inputStream.readUTF();
+		FileTreeItem newReceivable = new FileTreeItem(name, folder, id);
 		if (folder) {
 			int children = inputStream.readInt();
 			recvSubfolders(newReceivable, children, inputStream);
@@ -144,6 +144,61 @@ public class TransferControlThread extends NetThread {
 		}
 	}
 
+	private void sendQueuedDownloads(DataOutputStream outputStream) throws IOException {
+		int treeIndex = 0;
+		synchronized (nftController.getDownloads()) {
+			ObservableList downloads = nftController.getDownloads();
+			int downloadsLength = downloads.size();
+			while (((FileTreeItem) downloads.get(treeIndex)).getId() < nextDownloadId && treeIndex < downloadsLength) {
+				treeIndex++;
+			}
+			FileTreeItem rootTreeItem;
+			while (treeIndex < downloadsLength) {
+				rootTreeItem = (FileTreeItem) downloads.get(treeIndex);
+
+				outputStream.writeInt(3); //opcode
+				//root node info
+				outputStream.writeInt(rootTreeItem.getId());
+				outputStream.writeBoolean(rootTreeItem.isFolder());
+				outputStream.writeUTF(rootTreeItem.getName());
+				outputStream.writeUTF(rootTreeItem.getPath());
+				if (rootTreeItem.isFolder()) {
+					outputStream.writeInt(rootTreeItem.getChildren().size());
+					sendSubfolders(rootTreeItem, outputStream);
+				}
+				treeIndex++;
+				System.out.println("Finished sending " + rootTreeItem.getName());
+			}
+			nextDownloadId = ((FileTreeItem) downloads.get(treeIndex-1)).getId() + 1;
+		}
+		downloadsQueued = false;
+	}
+
+	private void recvQueuedDownloads(DataInputStream inputStream) throws IOException {
+		//root node info
+		int id = inputStream.readInt();
+		boolean folder = inputStream.readBoolean();
+		String name = inputStream.readUTF();
+		String path = inputStream.readUTF();
+		FileTreeItem newUpload = new FileTreeItem(name, folder, id, path);
+		if (folder) {
+			int children = inputStream.readInt();
+			recvSubfolders(newUpload, children, inputStream);
+		}
+		synchronized (nftController.getUploads()) {
+			nftController.getUploads().add(newUpload);
+			System.out.println("Finished receiving " + newUpload.getName());
+		}
+	}
+
+	private void sendDequeuedDownloads(DataOutputStream outputStream) throws IOException {
+
+	}
+
+	private void recvDequeuedDownloads(DataInputStream inputStream) throws IOException {
+
+	}
+
 	@Override
 	void afterConnection(DataInputStream inputStream, DataOutputStream outputStream) throws InterruptedException, IOException {// CHANGE THIS LATER! if the connection dies, this should not be caught and this thread should terminate
 		System.out.println("Transfer control thread connected");
@@ -162,6 +217,12 @@ public class TransferControlThread extends NetThread {
 			if (sendablesRemoved) {
 				sendRemovedSendables(outputStream);
 			}
+			if (downloadsQueued) {
+				sendQueuedDownloads(outputStream);
+			}
+			if (downloadsDequeued) {
+				sendDequeuedDownloads(outputStream);
+			}
 			try {
 				opCode = inputStream.readInt();
 				switch (opCode) {
@@ -170,6 +231,12 @@ public class TransferControlThread extends NetThread {
 						break;
 					case 2:
 						recvRemovedSendables(inputStream);
+						break;
+					case 3:
+						recvQueuedDownloads(inputStream);
+						break;
+					case 4:
+						recvDequeuedDownloads(inputStream);
 						break;
 					case 5:
 						outputStream.writeInt(5);
@@ -183,14 +250,22 @@ public class TransferControlThread extends NetThread {
 		System.out.println("Exiting transfer control thread");
 	}
 
-	public void sendableAdded() {
+	void sendableAdded() {
 		sendablesAdded = true;
 	}
 
-	public void sendableRemoved(int id, LinkedList<String> removedSendablePath) {
+	void sendableRemoved(int id, LinkedList<String> removedSendablePath) {
 		sendablesRemoved = true;
 		synchronized (removedSendables) {
 			removedSendables.put(id, removedSendablePath);
 		}
+	}
+
+	void downloadQueued() {
+		downloadsQueued = true;
+	}
+
+	void downloadDequeued() {
+		downloadsDequeued = true;
 	}
 }

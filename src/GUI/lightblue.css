@@ -16,7 +16,7 @@
 }
 
 .text-field {
-    -fx-background-color: steelblue;
+    -fx-background-color: #6c9dc6;
     -fx-text-fill: white;
     -fx-prompt-text-fill: lightgrey;
 }

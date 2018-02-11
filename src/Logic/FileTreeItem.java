@@ -1,6 +1,8 @@
 package Logic;
 
 import java.io.File;
+import java.io.Serializable;
+import java.util.LinkedList;
 import javafx.scene.control.TreeItem;
 
 /**
@@ -8,7 +10,7 @@ import javafx.scene.control.TreeItem;
  * Custom TreeItem derivative class designed for use in a tree that represents a folder in a file system and its
  * contents, and stores enough information for file/folder paths to be retrieved from the tree.
  */
-public class FileTreeItem extends TreeItem {
+public class FileTreeItem extends TreeItem implements Serializable {
 	private static final int NOT_ROOT = -1;
 	private String path = null;
 	private boolean folder;
@@ -57,6 +59,20 @@ public class FileTreeItem extends TreeItem {
 		this.id = id;
 	}
 
+	/**
+	 * Constructor for a root download/upload tree item
+	 * @param name		Name of the root download/upload tree item
+	 * @param folder	Whether the root download/upload tree item is a folder or file
+	 * @param id		ID number of the root receivable/sendable associated with the download/upload root tree item
+	 * @param path		Relative path to the download/upload from the associated root receivable/sendable
+	 */
+	public FileTreeItem(String name, boolean folder, int id, String path) {
+		super(name);
+		this.folder = folder;
+		this.id = id;
+		this.path = path;
+	}
+
 	public boolean isFolder() {
 		return folder;
 	}
@@ -81,5 +97,42 @@ public class FileTreeItem extends TreeItem {
 			return id;
 		else
 			throw new IllegalStateException("Non-root items have no id");
+	}
+
+	/**
+	 * Make a deep copy of a FileTreeItem used to represent a receivable folder
+	 * @return A deep copy of this object
+	 */
+	public FileTreeItem makeReceivableCopy(int id) {
+		FileTreeItem nextParent = this;
+		LinkedList<String> pathString = new LinkedList<>();
+		while (!nextParent.isRoot()) {
+			nextParent = (FileTreeItem)nextParent.getParent();
+			pathString.add(nextParent.getName());
+		}
+		int rootId = nextParent.getId();
+
+		FileTreeItem copy;
+		copy = new FileTreeItem(getName(), isFolder(), id, String.format("%d/%s", rootId, String.join("/", pathString)));
+		copySubfolders(copy, this);
+		return copy;
+	}
+
+	/**
+	 * Copy subfolders of original to copy object
+	 * @param copy		The copy object to have subfolders added
+	 * @param original	The original object to copy subfolders from
+	 */
+	private void copySubfolders(FileTreeItem copy, FileTreeItem original) {
+		FileTreeItem newItem;
+		FileTreeItem currentItem;
+		for (Object child : original.getChildren()) {
+			currentItem = (FileTreeItem) child;
+			newItem = new FileTreeItem(currentItem.getName(), currentItem.isFolder());
+			if (currentItem.isFolder()) {
+				copySubfolders(newItem, currentItem);
+			}
+			copy.getChildren().add(newItem);
+		}
 	}
 }

@@ -14,6 +14,7 @@ public class Main extends Application {
     private static TransferThread transferThread = null;
     private static TransferControlThread transferControlThread = null;
     private static int nextSendableRootId = -1;
+    private static int nextDownloadRootId = -1;
 
     public static void clientTransferThreads(String ip, int lowerPort, NftController nftController) {
         transferThread = new TransferThread(ip, lowerPort, nftController);
@@ -36,10 +37,8 @@ public class Main extends Application {
         transferControlThread = null;
     }
 
-    public static int getNextSendableRootId(boolean increment) {
-        if (increment) {
-            nextSendableRootId++;
-        }
+    public static int getNextSendableRootId() {
+		nextSendableRootId++;
         return nextSendableRootId;
     }
 
@@ -49,18 +48,31 @@ public class Main extends Application {
     }
 
     public static void sendableRemoved(int id, LinkedList<String> removedSendablePath) {
-        transferControlThread.sendableRemoved(id, removedSendablePath);
+        if (transferControlThread != null)
+            transferControlThread.sendableRemoved(id, removedSendablePath);
     }
+
+	public static int getNextDownloadRootId() {
+		nextDownloadRootId++;
+		return nextDownloadRootId;
+	}
+
+    public static void downloadQueued() {
+		transferControlThread.downloadQueued();
+    }
+
+    public static void downloadDequeued() {
+    	transferControlThread.downloadDequeued();
+	}
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/GUI/nft.fxml"));
         primaryStage.setTitle("Network File Transfer");
         Scene scene = new Scene(root, 1366, 768);
-        scene.getStylesheets().add(getClass().getResource("/GUI/steelblue.css").toExternalForm());
         primaryStage.setScene(scene);
         //primaryStage.setMinWidth(800);
-        //primaryStage.setMinHeight(430);
+        //primaryStage.setMinHeight(430);\
         primaryStage.show();
     }
 
