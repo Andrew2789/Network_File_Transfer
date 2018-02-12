@@ -322,7 +322,7 @@ public class NftController implements Initializable {
 	}
 
 	public void clearCompletedDownloads() {
-    	
+
 	}
 
     public void initialize(URL location, ResourceBundle resources) {

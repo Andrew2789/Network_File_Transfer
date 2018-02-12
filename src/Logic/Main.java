@@ -20,8 +20,6 @@ public class Main extends Application {
     private static int nextSendableRootId = -1;
     private static int nextDownloadRootId = -1;
 
-    public static Node testIcon;
-
     public static void clientTransferThreads(String ip, int port1, int port2, NftController nftController) {
         transferThread = new TransferThread(ip, port1, nftController);
         transferControlThread = new TransferControlThread(ip, port2, nftController);
@@ -76,15 +74,15 @@ public class Main extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage stage) throws Exception {
         /*System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream("stderr.log")), true));
         System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream("stdout.log")), true));*/
-        testIcon = new ImageView(new Image(getClass().getResourceAsStream("/GUI/img/test.ico")));
+        stage.setTitle("Network File Transfer");
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/GUI/img/wateryarrow.png")));
         Parent root = FXMLLoader.load(getClass().getResource("/GUI/nft.fxml"));
-        primaryStage.setTitle("Network File Transfer");
         Scene scene = new Scene(root, 1366, 768);
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        stage.setScene(scene);
+        stage.show();
     }
 
     @Override
