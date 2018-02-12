@@ -1,6 +1,9 @@
 package Logic;
 
 import GUI.NftController;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -68,15 +71,19 @@ public class Main extends Application {
     	transferControlThread.downloadDequeued();
 	}
 
+	public static void startUpload() {
+        transferThread.startUpload();
+    }
+
     @Override
     public void start(Stage primaryStage) throws Exception {
+        /*System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream("stderr.log")), true));
+        System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream("stdout.log")), true));*/
         testIcon = new ImageView(new Image(getClass().getResourceAsStream("/GUI/img/test.ico")));
         Parent root = FXMLLoader.load(getClass().getResource("/GUI/nft.fxml"));
         primaryStage.setTitle("Network File Transfer");
         Scene scene = new Scene(root, 1366, 768);
         primaryStage.setScene(scene);
-        //primaryStage.setMinWidth(800);
-        //primaryStage.setMinHeight(430);\
         primaryStage.show();
     }
 

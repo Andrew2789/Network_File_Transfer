@@ -5,6 +5,7 @@ import java.awt.SystemTray;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,7 +15,7 @@ public abstract class NetThread extends Thread {
 	protected Thread t;
 	protected Socket socket = null;
 	protected ServerSocket serverSocket = null;
-	protected static final int operationTimeout = 50;
+	protected static final int operationTimeout = 100;
 	protected static final int chunkSize = 65536;
 	protected boolean exit = false;
 	protected String ipAddress = null;
@@ -24,7 +25,7 @@ public abstract class NetThread extends Thread {
 	public NetThread(String ipAddress, int port, NftController nftController) {
 		this.ipAddress = ipAddress;
 		this.port = port;
-		this.connectTimeout = 3;
+		this.connectTimeout = 10000; //10 seconds
 		this.nftController = nftController;
 	}
 
@@ -47,8 +48,8 @@ public abstract class NetThread extends Thread {
 		if (ipAddress != null) {
 			try {
 				socket = new Socket();
+				socket.connect(new InetSocketAddress(InetAddress.getByName(ipAddress), port), connectTimeout);
 				socket.setSoTimeout(operationTimeout);
-				socket.connect(new InetSocketAddress(ipAddress, port), connectTimeout);
 			} catch (IOException e) {
 				socket = null;
 				nftController.connectFailed();
@@ -56,9 +57,8 @@ public abstract class NetThread extends Thread {
 			}
 		} else {
 			try {
-				serverSocket = new ServerSocket();
+				serverSocket = new ServerSocket(port);
 				serverSocket.setSoTimeout(operationTimeout);
-				serverSocket.bind(new InetSocketAddress("", port));
 			} catch (IOException e) {
 				serverSocket = null;
 				nftController.listenFailed();

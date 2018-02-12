@@ -77,6 +77,8 @@ public class NftController implements Initializable {
     @FXML
     private Button dequeueDownload;
     @FXML
+	private Button clearCompleted;
+    @FXML
     private Button addSendable;
     @FXML
     private Button removeSendable;
@@ -317,6 +319,10 @@ public class NftController implements Initializable {
 
 	public void cancelSelectedDownload() {
 
+	}
+
+	public void clearCompletedDownloads() {
+    	
 	}
 
     public void initialize(URL location, ResourceBundle resources) {

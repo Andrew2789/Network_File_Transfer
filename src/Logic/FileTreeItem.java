@@ -1,5 +1,6 @@
 package Logic;
 
+import GUI.ProgressTreeCell;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.Serializable;
@@ -30,7 +31,7 @@ public class FileTreeItem extends TreeItem implements Serializable {
 	 * @param size		The size of the file/folder
 	 */
 	public FileTreeItem(File file, long size) {
-		super(String.format("%s (%s)", file.getName(), generate3SFSizeString(size)), Main.testIcon);
+		super(String.format("%s (%s)", file.getName(), generate3SFSizeString(size)));
 		name = file.getName();
 		this.size = size;
 		folder = file.isDirectory();
@@ -43,8 +44,13 @@ public class FileTreeItem extends TreeItem implements Serializable {
 	 * @param size		Size of the receivable tree item
 	 * @param folder 	Whether the receivable tree item is a folder or file
 	 */
-	public FileTreeItem(String displayName, String name, long size, boolean folder) {
-		super(displayName, Main.testIcon);
+	public FileTreeItem(String displayName, String name, long size, boolean folder, boolean progressBar) {
+		super();
+		if (progressBar) {
+			this.setValue(new ProgressTreeCell(displayName));
+		} else {
+			this.setValue(displayName);
+		}
 		this.name = name;
 		this.size = size;
 		this.folder = folder;
@@ -56,7 +62,7 @@ public class FileTreeItem extends TreeItem implements Serializable {
 	 * @param id		The id of the sendable tree item
 	 */
 	public FileTreeItem(File file, long size, int id) {
-		super(String.format("%s (%s)", file.getName(), generate3SFSizeString(size)), Main.testIcon);
+		super(String.format("%s (%s)", file.getName(), generate3SFSizeString(size)));
 		name = file.getName();
 		this.size = size;
 		path = file.getAbsolutePath();
@@ -71,7 +77,7 @@ public class FileTreeItem extends TreeItem implements Serializable {
 	 * @param id		ID number of the root receivable tree item
 	 */
 	public FileTreeItem(String displayName, String name, long size, boolean folder, int id) {
-		super(displayName, Main.testIcon);
+		super(displayName);
 		this.name = name;
 		this.size = size;
 		this.folder = folder;
@@ -86,7 +92,7 @@ public class FileTreeItem extends TreeItem implements Serializable {
 	 * @param path		Relative path to the download/upload from the associated root receivable/sendable
 	 */
 	public FileTreeItem(String displayName, String name, long size, boolean folder, int id, String path) {
-		super(displayName, Main.testIcon);
+		super(new ProgressTreeCell(displayName));
 		this.name = name;
 		this.size = size;
 		this.folder = folder;
@@ -111,7 +117,13 @@ public class FileTreeItem extends TreeItem implements Serializable {
 	}
 
 	public String getDisplayName() {
-		return (String)getValue();
+		String displayName;
+		try {
+			displayName = (String)getValue();
+		} catch (ClassCastException e) {
+			displayName = ((ProgressTreeCell)getValue()).getText();
+		}
+		return displayName;
 	}
 
 	public String getPath() {
@@ -157,7 +169,7 @@ public class FileTreeItem extends TreeItem implements Serializable {
 		FileTreeItem currentItem;
 		for (Object child : original.getChildren()) {
 			currentItem = (FileTreeItem) child;
-			newItem = new FileTreeItem(currentItem.getDisplayName(), currentItem.getName(), currentItem.getSize(), currentItem.isFolder());
+			newItem = new FileTreeItem(currentItem.getDisplayName(), currentItem.getName(), currentItem.getSize(), currentItem.isFolder(), true);
 			if (currentItem.isFolder()) {
 				copySubfolders(newItem, currentItem);
 			}

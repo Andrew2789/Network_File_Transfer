@@ -109,4 +109,12 @@
 }
 .default-color1.chart-series-line {
 	-fx-stroke: yellow;
-} 
+}
+
+
+.progress-bar .track {
+	-fx-background-color: transparent;
+}
+.progress-bar .bar {
+	-fx-background-color: #1d3549;
+}

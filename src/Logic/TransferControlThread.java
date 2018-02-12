@@ -1,6 +1,7 @@
 package Logic;
 
 import GUI.NftController;
+import GUI.ProgressTreeCell;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -87,7 +88,7 @@ public class TransferControlThread extends NetThread {
 		FileTreeItem newReceivable = new FileTreeItem(displayName, name, size, folder, id);
 		if (folder) {
 			int children = inputStream.readInt();
-			recvSubfolders(newReceivable, children, inputStream);
+			recvSubfolders(newReceivable, children, inputStream, false);
 		}
 		synchronized (nftController.getReceivables()) {
 			nftController.getReceivables().add(newReceivable);
@@ -95,7 +96,7 @@ public class TransferControlThread extends NetThread {
 		}
 	}
 
-	private void recvSubfolders(FileTreeItem parent, int fileCount, DataInputStream inputStream) throws IOException {
+	private void recvSubfolders(FileTreeItem parent, int fileCount, DataInputStream inputStream, boolean progressBar) throws IOException {
 		boolean folder;
 		String displayName, name;
 		long size;
@@ -107,11 +108,11 @@ public class TransferControlThread extends NetThread {
 			displayName = inputStream.readUTF();
 			name = inputStream.readUTF();
 			size = inputStream.readLong();
-			newItem = new FileTreeItem(displayName, name, size, folder);
+			newItem = new FileTreeItem(displayName, name, size, folder, progressBar);
 			System.out.println(String.format("Receiving subitem %s from %s", newItem.getName(), parent.getName()));
 			if (folder) {
 				children = inputStream.readInt();
-				recvSubfolders(newItem, children, inputStream);
+				recvSubfolders(newItem, children, inputStream, progressBar);
 			}
 			parent.getChildren().add(newItem);
 		}
@@ -172,7 +173,7 @@ public class TransferControlThread extends NetThread {
 		downloadsQueued = false;
 	}
 
-	private void recvQueuedDownloads(DataInputStream inputStream) throws IOException {
+	private void recvQueuedDownloads(DataInputStream inputStream) throws IOException { //SWITCH THIS TO RELY ONLY ON DOWNLOAD PATH AND NOT RECEIVE SUBITEMS
 		//root node info
 		int id = inputStream.readInt();
 		boolean folder = inputStream.readBoolean();
@@ -183,12 +184,13 @@ public class TransferControlThread extends NetThread {
 		FileTreeItem newUpload = new FileTreeItem(displayName, name, size, folder, id, path);
 		if (folder) {
 			int children = inputStream.readInt();
-			recvSubfolders(newUpload, children, inputStream);
+			recvSubfolders(newUpload, children, inputStream, true);
 		}
 		synchronized (nftController.getUploads()) {
 			nftController.getUploads().add(newUpload);
 			System.out.println("Finished receiving " + newUpload.getName());
 		}
+		Main.startUpload();
 	}
 
 	private void sendDequeuedDownloads(DataOutputStream outputStream) throws IOException {
@@ -225,24 +227,30 @@ public class TransferControlThread extends NetThread {
 			}
 			try {
 				opCode = inputStream.readInt();
-				switch (opCode) {
-					case 1:
-						recvNewSendables(inputStream);
-						break;
-					case 2:
-						recvRemovedSendables(inputStream);
-						break;
-					case 3:
-						recvQueuedDownloads(inputStream);
-						break;
-					case 4:
-						recvDequeuedDownloads(inputStream);
-						break;
-					case 5:
-						outputStream.writeInt(5);
-						break;
-					default:
-						throw new IllegalStateException("Invalid opcode received: " + opCode);
+				socket.setSoTimeout(10000);
+				try {
+					switch (opCode) {
+						case 1:
+							recvNewSendables(inputStream);
+							break;
+						case 2:
+							recvRemovedSendables(inputStream);
+							break;
+						case 3:
+							recvQueuedDownloads(inputStream);
+							break;
+						case 4:
+							recvDequeuedDownloads(inputStream);
+							break;
+						case 5:
+							outputStream.writeInt(5);
+							break;
+						default:
+							throw new IllegalStateException("Invalid opcode received: " + opCode);
+					}
+					socket.setSoTimeout(operationTimeout);
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			} catch (SocketTimeoutException e) {
 			}
