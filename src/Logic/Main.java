@@ -4,11 +4,12 @@ import GUI.NftController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
-
-import java.util.LinkedList;
 
 public class Main extends Application {
     private static TransferThread transferThread = null;
@@ -16,16 +17,18 @@ public class Main extends Application {
     private static int nextSendableRootId = -1;
     private static int nextDownloadRootId = -1;
 
-    public static void clientTransferThreads(String ip, int lowerPort, NftController nftController) {
-        transferThread = new TransferThread(ip, lowerPort, nftController);
-        transferControlThread = new TransferControlThread(ip, lowerPort+1, nftController);
+    public static Node testIcon;
+
+    public static void clientTransferThreads(String ip, int port1, int port2, NftController nftController) {
+        transferThread = new TransferThread(ip, port1, nftController);
+        transferControlThread = new TransferControlThread(ip, port2, nftController);
         transferThread.start();
         transferControlThread.start();
     }
 
-    public static void hostTransferThreads(int lowerPort, NftController nftController) {
-        transferThread = new TransferThread(lowerPort, nftController);
-        transferControlThread = new TransferControlThread(lowerPort+1, nftController);
+    public static void hostTransferThreads(int port1, int port2, NftController nftController) {
+        transferThread = new TransferThread(port1, nftController);
+        transferControlThread = new TransferControlThread(port2, nftController);
         transferThread.start();
         transferControlThread.start();
     }
@@ -47,9 +50,9 @@ public class Main extends Application {
             transferControlThread.sendableAdded();
     }
 
-    public static void sendableRemoved(int id, LinkedList<String> removedSendablePath) {
+    public static void sendableRemoved(int id) {
         if (transferControlThread != null)
-            transferControlThread.sendableRemoved(id, removedSendablePath);
+            transferControlThread.sendableRemoved(id);
     }
 
 	public static int getNextDownloadRootId() {
@@ -67,6 +70,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        testIcon = new ImageView(new Image(getClass().getResourceAsStream("/GUI/img/test.ico")));
         Parent root = FXMLLoader.load(getClass().getResource("/GUI/nft.fxml"));
         primaryStage.setTitle("Network File Transfer");
         Scene scene = new Scene(root, 1366, 768);

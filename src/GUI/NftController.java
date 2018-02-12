@@ -6,11 +6,14 @@ import java.io.File;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.chart.LineChart;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import java.net.URL;
 import java.util.LinkedList;
@@ -23,8 +26,10 @@ public class NftController implements Initializable {
     private TextField nicknameInput;
     @FXML
     private TextField ipInput;
-    @FXML
-    private TextField portInput;
+	@FXML
+	private TextField port1Input;
+	@FXML
+	private TextField port2Input;
     @FXML
     private Label connectPrompt;
     @FXML
@@ -45,8 +50,10 @@ public class NftController implements Initializable {
     //Preferences elements
     @FXML
     private CheckBox rememberFolders;
-    @FXML
-    private CheckBox pref2;
+	@FXML
+	private CheckBox sslEncryption;
+	@FXML
+	private CheckBox darkTheme;
 
     //Network speed elements
     @FXML
@@ -95,7 +102,8 @@ public class NftController implements Initializable {
 
 	private void setSettingsEnabled(boolean enabled) {
         nicknameInput.setDisable(!enabled);
-        portInput.setDisable(!enabled);
+        port1Input.setDisable(!enabled);
+        port2Input.setDisable(!enabled);
         hosting.setDisable(!enabled);
     }
 
@@ -105,7 +113,8 @@ public class NftController implements Initializable {
         ipInput.setDisable(true);
         setSettingsEnabled(false);
         cancelButton.setVisible(true);
-        Main.clientTransferThreads(ipInput.getCharacters().toString(), Integer.parseInt(portInput.getCharacters().toString()), this);
+        Main.clientTransferThreads(ipInput.getCharacters().toString(), Integer.parseInt(port1Input.getCharacters().toString()),
+				Integer.parseInt(port2Input.getCharacters().toString()), this);
     }
 
 	public void connectFailed() {
@@ -134,7 +143,7 @@ public class NftController implements Initializable {
         listenButton.setDisable(true);
         setSettingsEnabled(false);
         cancelButton.setVisible(true);
-		Main.hostTransferThreads(Integer.parseInt(portInput.getCharacters().toString()), this);
+		Main.hostTransferThreads(Integer.parseInt(port1Input.getCharacters().toString()), Integer.parseInt(port2Input.getCharacters().toString()), this);
     }
 
     public void listenFailed() {
@@ -209,12 +218,14 @@ public class NftController implements Initializable {
 
     private boolean clientConnectReady() {
         String ipAddress = ipInput.getCharacters().toString();
-        String port = portInput.getCharacters().toString();
-        if (ipAddress.isEmpty() || port.isEmpty())
+		String port1 = port1Input.getCharacters().toString();
+		String port2 = port1Input.getCharacters().toString();
+        if (ipAddress.isEmpty() || port1.isEmpty() || port2.isEmpty())
             return false;
 
-        int portValue = Integer.parseInt(port);
-        if (portValue < portMin || (ipAddress.length() - ipAddress.replace(".", "").length() != 3))
+		int port1Value = Integer.parseInt(port1);
+		int port2Value = Integer.parseInt(port2);
+        if (port1Value < portMin || port2Value < portMin || (ipAddress.length() - ipAddress.replace(".", "").length() != 3))
             return false;
 
         return ipAddress.lastIndexOf('.') != ipAddress.length()-1;
@@ -222,7 +233,8 @@ public class NftController implements Initializable {
 
     private boolean hostListenReady() {
         try {
-            return Integer.parseInt(portInput.getCharacters().toString()) >= portMin;
+            return (Integer.parseInt(port1Input.getCharacters().toString()) >= portMin) &&
+					(Integer.parseInt(port2Input.getCharacters().toString()) >= portMin);
         } catch (NumberFormatException e) {
             return false;
         }
@@ -237,52 +249,50 @@ public class NftController implements Initializable {
             File[] files = chooser.getSelectedFiles();
             synchronized (sendableTree.getRoot().getChildren()) {
 				for (File file : files) {
-					FileTreeItem newItem = new FileTreeItem(file, Main.getNextSendableRootId());
+					FileTreeItem newItem = getSubfolder(file, true);
 					sendableTree.getRoot().getChildren().add(newItem);
-					if (file.isDirectory()) {
-						for (File child : file.listFiles()) {
-							addSubfolders(newItem, child);
-						}
-					}
 				}
 			}
 			Main.sendableAdded();
         }
     }
 
-    private void addSubfolders(FileTreeItem root, File folder) {
-		FileTreeItem newItem = new FileTreeItem(folder);
-		root.getChildren().add(newItem);
-        if (folder.isDirectory()) {
-            for (File file: folder.listFiles()) {
-                addSubfolders(newItem, file);
-            }
-        }
+    private FileTreeItem getSubfolder(File folder, boolean root) {
+    	LinkedList<FileTreeItem> subfolders = null;
+    	long size = 0;
+		if (folder.isDirectory()) {
+			subfolders = new LinkedList<>();
+			for (File file: folder.listFiles()) {
+				subfolders.add(getSubfolder(file, false));
+			}
+			for (FileTreeItem subfolder: subfolders) {
+				size += subfolder.getSize();
+			}
+		} else {
+			size = folder.length();
+		}
+		FileTreeItem newItem;
+		if (root)
+			newItem = new FileTreeItem(folder, size, Main.getNextSendableRootId());
+		else
+			newItem = new FileTreeItem(folder, size);
+
+		if (subfolders != null) {
+			for (FileTreeItem subfolder: subfolders) {
+				newItem.getChildren().add(subfolder);
+			}
+		}
+		return newItem;
     }
 
     public void sendableClicked() {
-    	removeSendable.setDisable(sendableTree.getSelectionModel().getSelectedItem() == null);
+    	removeSendable.setDisable(sendableTree.getSelectionModel().getSelectedItem() == null || !((FileTreeItem)sendableTree.getSelectionModel().getSelectedItem()).isRoot());
 	}
 
     public void deleteSelectedSendable() {
 		synchronized (sendableTree.getRoot().getChildren()) {
 			FileTreeItem toRemove = (FileTreeItem)sendableTree.getSelectionModel().getSelectedItem();
-			LinkedList<FileTreeItem> path = new LinkedList<>();
-			path.addFirst(toRemove);
-			while (path.getFirst() != null && !path.getFirst().isRoot()) {
-				path.addFirst((FileTreeItem)path.getFirst().getParent());
-			}
-			if (path.getFirst() == null) {
-				System.err.println("Got removed sendable parent as null: " + toRemove.getName());
-				System.err.println("Not sending removed sendable info to peer. Check for possible desync.");
-			} else {
-				LinkedList<String> pathString = new LinkedList<>();
-				for (FileTreeItem fileTreeItem : path) {
-					pathString.add(fileTreeItem.getName());
-				}
-				Main.sendableRemoved(path.getFirst().getId(), pathString);
-			}
-
+			Main.sendableRemoved(toRemove.getId());
 			toRemove.getParent().getChildren().remove(toRemove);
 			sendableTree.getSelectionModel().clearSelection();
 		}
@@ -318,7 +328,17 @@ public class NftController implements Initializable {
 			}
 		});
 
-		portInput.setOnKeyPressed(event -> {
+		port1Input.setOnKeyPressed(event -> {
+			if (event.getCode() == KeyCode.ENTER) {
+				if (clientConnectReady() && !hosting.isSelected()) {
+					connectClicked();
+				} else if (hostListenReady() && hosting.isSelected()) {
+					listenClicked();
+				}
+			}
+		});
+
+		port2Input.setOnKeyPressed(event -> {
 			if (event.getCode() == KeyCode.ENTER) {
 				if (clientConnectReady() && !hosting.isSelected()) {
 					connectClicked();
@@ -357,16 +377,27 @@ public class NftController implements Initializable {
             connectButton.setDisable(!clientConnectReady());
         });
 
-        portInput.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!updateNumberField(newValue, portMax)) {
-                ((StringProperty)observable).setValue(oldValue);
-            }
-            if (hosting.isSelected()) {
-                listenButton.setDisable(!hostListenReady());
-            } else {
-                connectButton.setDisable(!clientConnectReady());
-            }
-        });
+		port1Input.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!updateNumberField(newValue, portMax)) {
+				((StringProperty)observable).setValue(oldValue);
+			}
+			if (hosting.isSelected()) {
+				listenButton.setDisable(!hostListenReady());
+			} else {
+				connectButton.setDisable(!clientConnectReady());
+			}
+		});
+
+		port2Input.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!updateNumberField(newValue, portMax)) {
+				((StringProperty)observable).setValue(oldValue);
+			}
+			if (hosting.isSelected()) {
+				listenButton.setDisable(!hostListenReady());
+			} else {
+				connectButton.setDisable(!clientConnectReady());
+			}
+		});
 
         downloadsTree.setRoot(new TreeItem<String>("root"));
         downloadsTree.setShowRoot(false);

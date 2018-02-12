@@ -16,7 +16,7 @@ public class TransferControlThread extends NetThread {
 
 	private boolean sendablesAdded = true, sendablesRemoved = false, downloadsQueued = false, downloadsDequeued = false;
 	private int nextSendableId = 0, nextDownloadId = 0;
-	private LinkedHashMap<Integer, LinkedList<String>> removedSendables = new LinkedHashMap<>();
+	private LinkedList<Integer> removedSendables = new LinkedList<>();
 
 	public TransferControlThread(String ipAddress, int port, NftController nftController) {
 		super(ipAddress, port, nftController);
@@ -45,7 +45,9 @@ public class TransferControlThread extends NetThread {
 				//root node info
 				outputStream.writeInt(rootTreeItem.getId());
 				outputStream.writeBoolean(rootTreeItem.isFolder());
+				outputStream.writeUTF(rootTreeItem.getDisplayName());
 				outputStream.writeUTF(rootTreeItem.getName());
+				outputStream.writeLong(rootTreeItem.getSize());
 				if (rootTreeItem.isFolder()) {
 					outputStream.writeInt(rootTreeItem.getChildren().size());
 					sendSubfolders(rootTreeItem, outputStream);
@@ -65,7 +67,9 @@ public class TransferControlThread extends NetThread {
 			currentItem = (FileTreeItem) child;
 			System.out.println(String.format("Sending subitem %s from %s", currentItem.getName(), parent.getName()));
 			outputStream.writeBoolean(currentItem.isFolder());
+			outputStream.writeUTF(currentItem.getDisplayName());
 			outputStream.writeUTF(currentItem.getName());
+			outputStream.writeLong(currentItem.getSize());
 			if (currentItem.isFolder()) {
 				outputStream.writeInt(currentItem.getChildren().size());
 				sendSubfolders(currentItem, outputStream);
@@ -77,8 +81,10 @@ public class TransferControlThread extends NetThread {
 		//root node info
 		int id = inputStream.readInt();
 		boolean folder = inputStream.readBoolean();
+		String displayName = inputStream.readUTF();
 		String name = inputStream.readUTF();
-		FileTreeItem newReceivable = new FileTreeItem(name, folder, id);
+		long size = inputStream.readLong();
+		FileTreeItem newReceivable = new FileTreeItem(displayName, name, size, folder, id);
 		if (folder) {
 			int children = inputStream.readInt();
 			recvSubfolders(newReceivable, children, inputStream);
@@ -91,14 +97,17 @@ public class TransferControlThread extends NetThread {
 
 	private void recvSubfolders(FileTreeItem parent, int fileCount, DataInputStream inputStream) throws IOException {
 		boolean folder;
-		String name;
+		String displayName, name;
+		long size;
 		int children;
 		FileTreeItem newItem;
 		System.out.println(String.format("Receiving folder %s subitems %d", parent.getName(), fileCount));
 		for (int i = 0; i < fileCount; i++) {
 			folder = inputStream.readBoolean();
+			displayName = inputStream.readUTF();
 			name = inputStream.readUTF();
-			newItem = new FileTreeItem(name, folder);
+			size = inputStream.readLong();
+			newItem = new FileTreeItem(displayName, name, size, folder);
 			System.out.println(String.format("Receiving subitem %s from %s", newItem.getName(), parent.getName()));
 			if (folder) {
 				children = inputStream.readInt();
@@ -110,37 +119,24 @@ public class TransferControlThread extends NetThread {
 
 	private void sendRemovedSendables(DataOutputStream outputStream) throws IOException {
 		synchronized (removedSendables) {
-			for (int id: removedSendables.keySet()) {
+			for (int id: removedSendables) {
 				outputStream.writeInt(2); //opcode
 				outputStream.writeInt(id);
-				if (removedSendables.get(id).size() == 1) {
-					outputStream.writeBoolean(true);
-				} else {
-					outputStream.writeBoolean(false);
-					for (String pathItem : removedSendables.get(id)) {
-						outputStream.writeUTF(pathItem);
-					}
-				}
 			}
 		}
 	}
 
 	private void recvRemovedSendables(DataInputStream inputStream) throws IOException {
-		boolean root = inputStream.readBoolean();
-		if (root) {
-			FileTreeItem childItem;
-			int id = inputStream.readInt();
-			synchronized (nftController.getReceivables()) {
-				for (Object child: nftController.getReceivables()) {
-					childItem = (FileTreeItem)child;
-					if (childItem.getId() == id) {
-						nftController.getReceivables().remove(childItem);
-						break;
-					}
+		FileTreeItem childItem;
+		int id = inputStream.readInt();
+		synchronized (nftController.getReceivables()) {
+			for (Object child: nftController.getReceivables()) {
+				childItem = (FileTreeItem)child;
+				if (childItem.getId() == id) {
+					nftController.getReceivables().remove(childItem);
+					break;
 				}
 			}
-		} else {
-
 		}
 	}
 
@@ -160,7 +156,9 @@ public class TransferControlThread extends NetThread {
 				//root node info
 				outputStream.writeInt(rootTreeItem.getId());
 				outputStream.writeBoolean(rootTreeItem.isFolder());
+				outputStream.writeUTF(rootTreeItem.getDisplayName());
 				outputStream.writeUTF(rootTreeItem.getName());
+				outputStream.writeLong(rootTreeItem.getSize());
 				outputStream.writeUTF(rootTreeItem.getPath());
 				if (rootTreeItem.isFolder()) {
 					outputStream.writeInt(rootTreeItem.getChildren().size());
@@ -178,9 +176,11 @@ public class TransferControlThread extends NetThread {
 		//root node info
 		int id = inputStream.readInt();
 		boolean folder = inputStream.readBoolean();
+		String displayName = inputStream.readUTF();
 		String name = inputStream.readUTF();
+		long size = inputStream.readLong();
 		String path = inputStream.readUTF();
-		FileTreeItem newUpload = new FileTreeItem(name, folder, id, path);
+		FileTreeItem newUpload = new FileTreeItem(displayName, name, size, folder, id, path);
 		if (folder) {
 			int children = inputStream.readInt();
 			recvSubfolders(newUpload, children, inputStream);
@@ -254,10 +254,10 @@ public class TransferControlThread extends NetThread {
 		sendablesAdded = true;
 	}
 
-	void sendableRemoved(int id, LinkedList<String> removedSendablePath) {
+	void sendableRemoved(int id) {
 		sendablesRemoved = true;
 		synchronized (removedSendables) {
-			removedSendables.put(id, removedSendablePath);
+			removedSendables.add(id);
 		}
 	}
 

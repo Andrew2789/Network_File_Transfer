@@ -1,9 +1,14 @@
 package Logic;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.LinkedList;
 import javafx.scene.control.TreeItem;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 /**
  * @author Andrew Davidson (a.n.d.9489@gmail.com)
@@ -12,26 +17,36 @@ import javafx.scene.control.TreeItem;
  */
 public class FileTreeItem extends TreeItem implements Serializable {
 	private static final int NOT_ROOT = -1;
+	private String name;
 	private String path = null;
+	private long size;
 	private boolean folder;
 	private int id = NOT_ROOT;
+	private static final String[] fileSizeUnits = {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
 
 	/**
 	 * Constructor for a sendable tree item from a File object
-	 * @param file 		The file to construct a sendable tree item from
+	 * @param file 		The file/folder to construct a sendable tree item from
+	 * @param size		The size of the file/folder
 	 */
-	public FileTreeItem(File file) {
-		super(file.getName());
+	public FileTreeItem(File file, long size) {
+		super(String.format("%s (%s)", file.getName(), generate3SFSizeString(size)), Main.testIcon);
+		name = file.getName();
+		this.size = size;
 		folder = file.isDirectory();
 	}
 
 	/**
 	 * Constructor for a receivable tree item from received data
+	 * @param displayName Name displayed on the TreeView
 	 * @param name 		Name of the receivable tree item
+	 * @param size		Size of the receivable tree item
 	 * @param folder 	Whether the receivable tree item is a folder or file
 	 */
-	public FileTreeItem(String name, boolean folder) {
-		super(name);
+	public FileTreeItem(String displayName, String name, long size, boolean folder) {
+		super(displayName, Main.testIcon);
+		this.name = name;
+		this.size = size;
 		this.folder = folder;
 	}
 
@@ -40,8 +55,10 @@ public class FileTreeItem extends TreeItem implements Serializable {
 	 * @param file		The file to construct a root sendable tree item from
 	 * @param id		The id of the sendable tree item
 	 */
-	public FileTreeItem(File file, int id) {
-		super(file.getName());
+	public FileTreeItem(File file, long size, int id) {
+		super(String.format("%s (%s)", file.getName(), generate3SFSizeString(size)), Main.testIcon);
+		name = file.getName();
+		this.size = size;
 		path = file.getAbsolutePath();
 		folder = file.isDirectory();
 		this.id = id;
@@ -53,8 +70,10 @@ public class FileTreeItem extends TreeItem implements Serializable {
 	 * @param folder	Whether the root receivable tree item is a folder or file
 	 * @param id		ID number of the root receivable tree item
 	 */
-	public FileTreeItem(String name, boolean folder, int id) {
-		super(name);
+	public FileTreeItem(String displayName, String name, long size, boolean folder, int id) {
+		super(displayName, Main.testIcon);
+		this.name = name;
+		this.size = size;
 		this.folder = folder;
 		this.id = id;
 	}
@@ -66,11 +85,21 @@ public class FileTreeItem extends TreeItem implements Serializable {
 	 * @param id		ID number of the root receivable/sendable associated with the download/upload root tree item
 	 * @param path		Relative path to the download/upload from the associated root receivable/sendable
 	 */
-	public FileTreeItem(String name, boolean folder, int id, String path) {
-		super(name);
+	public FileTreeItem(String displayName, String name, long size, boolean folder, int id, String path) {
+		super(displayName, Main.testIcon);
+		this.name = name;
+		this.size = size;
 		this.folder = folder;
 		this.id = id;
 		this.path = path;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public long getSize() {
+		return size;
 	}
 
 	public boolean isFolder() {
@@ -81,7 +110,7 @@ public class FileTreeItem extends TreeItem implements Serializable {
 		return !(id == NOT_ROOT);
 	}
 
-	public String getName() {
+	public String getDisplayName() {
 		return (String)getValue();
 	}
 
@@ -113,7 +142,7 @@ public class FileTreeItem extends TreeItem implements Serializable {
 		int rootId = nextParent.getId();
 
 		FileTreeItem copy;
-		copy = new FileTreeItem(getName(), isFolder(), id, String.format("%d/%s", rootId, String.join("/", pathString)));
+		copy = new FileTreeItem(getDisplayName(), name, size, isFolder(), id, String.format("%d/%s", rootId, String.join("/", pathString)));
 		copySubfolders(copy, this);
 		return copy;
 	}
@@ -128,11 +157,26 @@ public class FileTreeItem extends TreeItem implements Serializable {
 		FileTreeItem currentItem;
 		for (Object child : original.getChildren()) {
 			currentItem = (FileTreeItem) child;
-			newItem = new FileTreeItem(currentItem.getName(), currentItem.isFolder());
+			newItem = new FileTreeItem(currentItem.getDisplayName(), currentItem.getName(), currentItem.getSize(), currentItem.isFolder());
 			if (currentItem.isFolder()) {
 				copySubfolders(newItem, currentItem);
 			}
 			copy.getChildren().add(newItem);
 		}
+	}
+
+	/**
+	 * Generates a display string from a file size
+	 * @param size		The file size to generate a display string from
+	 * @return			The display string
+	 */
+	public static String generate3SFSizeString(long size) {
+		if (size == 0) {
+			return "0B";
+		}
+		int sizeLength = String.valueOf(size).length();
+		double doubleSize = ((double)size)/(Math.pow(1024, (sizeLength-1) / 3));
+		String unit = fileSizeUnits[(sizeLength-1) / 3];
+		return String.format("%.3G%s", doubleSize, unit);
 	}
 }
