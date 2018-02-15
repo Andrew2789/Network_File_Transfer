@@ -27,7 +27,7 @@ public class TransferControlThread extends NetThread {
 		super(port, nftController);
 	}
 
-	private void sendNewSendables(DataOutputStream outputStream) throws IOException {
+	private void sendNewSendables() throws IOException {
 		if (nftController.getSendables().size() == 0)
 			return;
 
@@ -51,7 +51,7 @@ public class TransferControlThread extends NetThread {
 				outputStream.writeLong(rootTreeItem.getSize());
 				if (rootTreeItem.isFolder()) {
 					outputStream.writeInt(rootTreeItem.getChildren().size());
-					sendSubfolders(rootTreeItem, outputStream);
+					sendSubfolders(rootTreeItem);
 				}
 				treeIndex++;
 				System.out.println("Finished sending " + rootTreeItem.getName());
@@ -61,7 +61,7 @@ public class TransferControlThread extends NetThread {
 		sendablesAdded = false;
 	}
 
-	private void sendSubfolders(FileTreeItem parent, DataOutputStream outputStream) throws IOException {
+	private void sendSubfolders(FileTreeItem parent) throws IOException {
 		FileTreeItem currentItem;
 		System.out.println(String.format("Sending folder %s subitems %d", parent.getName(), parent.getChildren().size()));
 		for (Object child : parent.getChildren()) {
@@ -73,12 +73,12 @@ public class TransferControlThread extends NetThread {
 			outputStream.writeLong(currentItem.getSize());
 			if (currentItem.isFolder()) {
 				outputStream.writeInt(currentItem.getChildren().size());
-				sendSubfolders(currentItem, outputStream);
+				sendSubfolders(currentItem);
 			}
 		}
 	}
 
-	private void recvNewSendables(DataInputStream inputStream) throws IOException {
+	private void recvNewSendables() throws IOException {
 		//root node info
 		int id = inputStream.readInt();
 		boolean folder = inputStream.readBoolean();
@@ -88,7 +88,7 @@ public class TransferControlThread extends NetThread {
 		FileTreeItem newReceivable = new FileTreeItem(displayName, name, size, folder, id);
 		if (folder) {
 			int children = inputStream.readInt();
-			recvSubfolders(newReceivable, children, inputStream, false);
+			recvSubfolders(newReceivable, children, false);
 		}
 		synchronized (nftController.getReceivables()) {
 			nftController.getReceivables().add(newReceivable);
@@ -96,7 +96,7 @@ public class TransferControlThread extends NetThread {
 		}
 	}
 
-	private void recvSubfolders(FileTreeItem parent, int fileCount, DataInputStream inputStream, boolean progressBar) throws IOException {
+	private void recvSubfolders(FileTreeItem parent, int fileCount, boolean progressBar) throws IOException {
 		boolean folder;
 		String displayName, name;
 		long size;
@@ -112,13 +112,13 @@ public class TransferControlThread extends NetThread {
 			System.out.println(String.format("Receiving subitem %s from %s", newItem.getName(), parent.getName()));
 			if (folder) {
 				children = inputStream.readInt();
-				recvSubfolders(newItem, children, inputStream, progressBar);
+				recvSubfolders(newItem, children, progressBar);
 			}
 			parent.getChildren().add(newItem);
 		}
 	}
 
-	private void sendRemovedSendables(DataOutputStream outputStream) throws IOException {
+	private void sendRemovedSendables() throws IOException {
 		synchronized (removedSendables) {
 			for (int id: removedSendables) {
 				outputStream.writeInt(2); //opcode
@@ -127,7 +127,7 @@ public class TransferControlThread extends NetThread {
 		}
 	}
 
-	private void recvRemovedSendables(DataInputStream inputStream) throws IOException {
+	private void recvRemovedSendables() throws IOException {
 		FileTreeItem childItem;
 		int id = inputStream.readInt();
 		synchronized (nftController.getReceivables()) {
@@ -141,7 +141,7 @@ public class TransferControlThread extends NetThread {
 		}
 	}
 
-	private void sendQueuedDownloads(DataOutputStream outputStream) throws IOException {
+	private void sendQueuedDownloads() throws IOException {
 		int treeIndex = 0;
 		synchronized (nftController.getDownloads()) {
 			ObservableList downloads = nftController.getDownloads();
@@ -163,7 +163,7 @@ public class TransferControlThread extends NetThread {
 				outputStream.writeUTF(rootTreeItem.getPath());
 				if (rootTreeItem.isFolder()) {
 					outputStream.writeInt(rootTreeItem.getChildren().size());
-					sendSubfolders(rootTreeItem, outputStream);
+					sendSubfolders(rootTreeItem);
 				}
 				treeIndex++;
 				System.out.println("Finished sending " + rootTreeItem.getName());
@@ -173,7 +173,7 @@ public class TransferControlThread extends NetThread {
 		downloadsQueued = false;
 	}
 
-	private void recvQueuedDownloads(DataInputStream inputStream) throws IOException { //SWITCH THIS TO RELY ONLY ON DOWNLOAD PATH AND NOT RECEIVE SUBITEMS
+	private void recvQueuedDownloads() throws IOException { //SWITCH THIS TO RELY ONLY ON DOWNLOAD PATH AND NOT RECEIVE SUBITEMS
 		//root node info
 		int id = inputStream.readInt();
 		boolean folder = inputStream.readBoolean();
@@ -184,7 +184,7 @@ public class TransferControlThread extends NetThread {
 		FileTreeItem newUpload = new FileTreeItem(displayName, name, size, folder, id, path);
 		if (folder) {
 			int children = inputStream.readInt();
-			recvSubfolders(newUpload, children, inputStream, true);
+			recvSubfolders(newUpload, children, true);
 		}
 		synchronized (nftController.getUploads()) {
 			nftController.getUploads().add(newUpload);
@@ -193,16 +193,16 @@ public class TransferControlThread extends NetThread {
 		Main.startUpload();
 	}
 
-	private void sendDequeuedDownloads(DataOutputStream outputStream) throws IOException {
+	private void sendDequeuedDownloads() throws IOException {
 
 	}
 
-	private void recvDequeuedDownloads(DataInputStream inputStream) throws IOException {
+	private void recvDequeuedDownloads() throws IOException {
 
 	}
 
 	@Override
-	void afterConnection(DataInputStream inputStream, DataOutputStream outputStream) throws InterruptedException, IOException {// CHANGE THIS LATER! if the connection dies, this should not be caught and this thread should terminate
+	void afterConnection() throws InterruptedException, IOException {// CHANGE THIS LATER! if the connection dies, this should not be caught and this thread should terminate
 		System.out.println("Transfer control thread connected");
 		int opCode = 0;
 		while (!exit) {
@@ -214,33 +214,33 @@ public class TransferControlThread extends NetThread {
 			5: echo
 			*/
 			if (sendablesAdded) {
-				sendNewSendables(outputStream);
+				sendNewSendables();
 			}
 			if (sendablesRemoved) {
-				sendRemovedSendables(outputStream);
+				sendRemovedSendables();
 			}
 			if (downloadsQueued) {
-				sendQueuedDownloads(outputStream);
+				sendQueuedDownloads();
 			}
 			if (downloadsDequeued) {
-				sendDequeuedDownloads(outputStream);
+				sendDequeuedDownloads();
 			}
 			try {
 				opCode = inputStream.readInt();
-				socket.setSoTimeout(10000);
+				socket.setSoTimeout(commTimeout);
 				try {
 					switch (opCode) {
 						case 1:
-							recvNewSendables(inputStream);
+							recvNewSendables();
 							break;
 						case 2:
-							recvRemovedSendables(inputStream);
+							recvRemovedSendables();
 							break;
 						case 3:
-							recvQueuedDownloads(inputStream);
+							recvQueuedDownloads();
 							break;
 						case 4:
-							recvDequeuedDownloads(inputStream);
+							recvDequeuedDownloads();
 							break;
 						case 5:
 							outputStream.writeInt(5);
@@ -248,7 +248,7 @@ public class TransferControlThread extends NetThread {
 						default:
 							throw new IllegalStateException("Invalid opcode received: " + opCode);
 					}
-					socket.setSoTimeout(operationTimeout);
+					socket.setSoTimeout(checkTimeout);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

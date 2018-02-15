@@ -15,29 +15,36 @@ import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-    private static TransferThread transferThread = null;
+    private static TransferThread writeThread = null;
+    private static TransferThread readThread = null;
     private static TransferControlThread transferControlThread = null;
     private static int nextSendableRootId = -1;
     private static int nextDownloadRootId = -1;
 
     public static void clientTransferThreads(String ip, int port1, int port2, NftController nftController) {
-        transferThread = new TransferThread(ip, port1, nftController);
+        writeThread = new TransferThread(ip, port1, nftController);
+        readThread = new TransferThread(writeThread, nftController);
         transferControlThread = new TransferControlThread(ip, port2, nftController);
-        transferThread.start();
+        writeThread.start();
+        readThread.start();
         transferControlThread.start();
     }
 
     public static void hostTransferThreads(int port1, int port2, NftController nftController) {
-        transferThread = new TransferThread(port1, nftController);
+        writeThread = new TransferThread(port1, nftController);
+        readThread = new TransferThread(writeThread, nftController);
         transferControlThread = new TransferControlThread(port2, nftController);
-        transferThread.start();
+        writeThread.start();
+        readThread.start();
         transferControlThread.start();
     }
 
     public static void killTransferThreads() {
-        transferThread.exit();
+        writeThread.exit();
+        readThread.exit();
         transferControlThread.exit();
-        transferThread = null;
+        writeThread = null;
+        readThread = null;
         transferControlThread = null;
     }
 
@@ -69,8 +76,12 @@ public class Main extends Application {
     	transferControlThread.downloadDequeued();
 	}
 
-	public static void startUpload() {
-        transferThread.startUpload();
+    public static void startUpload() {
+        writeThread.startTransfer();
+    }
+
+    public static void startDownlaod() {
+        readThread.startTransfer();
     }
 
     @Override
@@ -87,8 +98,11 @@ public class Main extends Application {
 
     @Override
     public void stop() {
-        if (transferThread != null) {
-            transferThread.exit();
+        if (writeThread != null) {
+            writeThread.exit();
+        }
+        if (readThread != null) {
+            readThread.exit();
         }
         if (transferControlThread != null) {
             transferControlThread.exit();
