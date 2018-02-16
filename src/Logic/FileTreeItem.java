@@ -16,7 +16,7 @@ import javafx.scene.image.ImageView;
  * Custom TreeItem derivative class designed for use in a tree that represents a folder in a file system and its
  * contents, and stores enough information for file/folder paths to be retrieved from the tree.
  */
-public class FileTreeItem extends TreeItem implements Serializable {
+public class FileTreeItem extends TreeItem {
 	private static final int NOT_ROOT = -1;
 	private String name;
 	private String path = null;

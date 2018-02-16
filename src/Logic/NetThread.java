@@ -5,16 +5,12 @@ import java.awt.SystemTray;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
+import java.net.*;
 
 public abstract class NetThread extends Thread {
-	protected Thread t;
+	private Thread t;
+	private ServerSocket serverSocket = null;
 	protected Socket socket = null;
-	protected ServerSocket serverSocket = null;
 	protected static final int checkTimeout = 100;
 	protected static final int commTimeout = 10000;
 	protected static final int chunkSize = 65536;
@@ -44,10 +40,6 @@ public abstract class NetThread extends Thread {
 		this.outputStream = outputStream;
 		this.nftController = nftController;
 		ownsSocket = false;
-	}
-
-	public boolean setupDone() {
-		return socket != null && socket.isConnected();
 	}
 
 	public void exit() {
