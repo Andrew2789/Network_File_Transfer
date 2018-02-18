@@ -18,6 +18,7 @@ import javafx.scene.input.KeyCode;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
+import javafx.stage.DirectoryChooser;
 import javax.swing.JFileChooser;
 
 public class NftController implements Initializable {
@@ -48,10 +49,16 @@ public class NftController implements Initializable {
 	private Button disconnectButton;
 
     //Preferences elements
+	@FXML
+	private Button chooseDownloadPath;
+	@FXML
+	private TextField downloadPathInput;
+	@FXML
+	private CheckBox relativeDownloadPath;
     @FXML
     private CheckBox rememberFolders;
 	@FXML
-	private CheckBox sslEncryption;
+	private CheckBox fileNameEncryption;
 	@FXML
 	private CheckBox darkTheme;
 
@@ -100,6 +107,14 @@ public class NftController implements Initializable {
 
 	public ObservableList getUploads() {
 		return uploadsTree.getRoot().getChildren();
+	}
+
+	public String getDownloadPath() {
+    	if (relativeDownloadPath.isSelected()) {
+    		return String.format("%s%s%s", ClassLoader.getSystemClassLoader().getResource(".").getPath(), File.separatorChar, downloadPathInput.getText());
+		} else {
+			return downloadPathInput.getText();
+		}
 	}
 
 	private void setSettingsEnabled(boolean enabled) {
@@ -242,6 +257,17 @@ public class NftController implements Initializable {
         }
     }
 
+    public void chooseNewDownloadPath() {
+		JFileChooser chooser = new JFileChooser(".");
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		int ret = chooser.showOpenDialog(null);
+		if(ret == JFileChooser.APPROVE_OPTION) {
+			downloadPathInput.setText(chooser.getSelectedFile().getAbsolutePath());
+			relativeDownloadPath.setSelected(false);
+		}
+	}
+
     public void newSendable() {
         JFileChooser chooser = new JFileChooser(".");
         chooser.setMultiSelectionEnabled(true);
@@ -309,7 +335,7 @@ public class NftController implements Initializable {
 		synchronized (downloadsTree.getRoot().getChildren()) {
 			synchronized (receivableTree.getRoot().getChildren()) {
 				FileTreeItem toQueue = (FileTreeItem) receivableTree.getSelectionModel().getSelectedItem();
-				downloadsTree.getRoot().getChildren().add(toQueue.makeReceivableCopy(Main.getNextDownloadRootId()));
+				downloadsTree.getRoot().getChildren().add(toQueue.receivableToDownload(Main.getNextDownloadRootId()));
 				receivableTree.getSelectionModel().clearSelection();
 			}
 		}
@@ -405,13 +431,9 @@ public class NftController implements Initializable {
 			}
 		});
 
-        downloadsTree.setRoot(new TreeItem<String>("root"));
-        downloadsTree.setShowRoot(false);
-        uploadsTree.setRoot(new TreeItem<String>("root"));
-        uploadsTree.setShowRoot(false);
-        sendableTree.setRoot(new TreeItem<String>("root"));
-        sendableTree.setShowRoot(false);
-        receivableTree.setRoot(new TreeItem<String>("root"));
-        receivableTree.setShowRoot(false);
+        downloadsTree.setRoot(new TreeItem<>("root"));
+        uploadsTree.setRoot(new TreeItem<>("root"));
+        sendableTree.setRoot(new TreeItem<>("root"));
+        receivableTree.setRoot(new TreeItem<>("root"));
     }
 }

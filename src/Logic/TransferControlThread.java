@@ -41,7 +41,6 @@ public class TransferControlThread extends NetThread {
 			FileTreeItem rootTreeItem;
 			while (treeIndex < sendableLength) {
 				rootTreeItem = (FileTreeItem) sendables.get(treeIndex);
-
 				outputStream.writeInt(1); //opcode
 				//root node info
 				outputStream.writeInt(rootTreeItem.getId());
@@ -88,7 +87,7 @@ public class TransferControlThread extends NetThread {
 		FileTreeItem newReceivable = new FileTreeItem(displayName, name, size, folder, id);
 		if (folder) {
 			int children = inputStream.readInt();
-			recvSubfolders(newReceivable, children, false);
+			recvSubfolders(newReceivable, children);
 		}
 		synchronized (nftController.getReceivables()) {
 			nftController.getReceivables().add(newReceivable);
@@ -96,7 +95,7 @@ public class TransferControlThread extends NetThread {
 		}
 	}
 
-	private void recvSubfolders(FileTreeItem parent, int fileCount, boolean progressBar) throws IOException {
+	private void recvSubfolders(FileTreeItem parent, int fileCount) throws IOException {
 		boolean folder;
 		String displayName, name;
 		long size;
@@ -108,11 +107,11 @@ public class TransferControlThread extends NetThread {
 			displayName = inputStream.readUTF();
 			name = inputStream.readUTF();
 			size = inputStream.readLong();
-			newItem = new FileTreeItem(displayName, name, size, folder, progressBar);
+			newItem = new FileTreeItem(displayName, name, size, folder);
 			System.out.println(String.format("Receiving subitem %s from %s", newItem.getName(), parent.getName()));
 			if (folder) {
 				children = inputStream.readInt();
-				recvSubfolders(newItem, children, progressBar);
+				recvSubfolders(newItem, children);
 			}
 			parent.getChildren().add(newItem);
 		}
@@ -152,40 +151,22 @@ public class TransferControlThread extends NetThread {
 			FileTreeItem rootTreeItem;
 			while (treeIndex < downloadsLength) {
 				rootTreeItem = (FileTreeItem) downloads.get(treeIndex);
-
 				outputStream.writeInt(3); //opcode
-				//root node info
 				outputStream.writeInt(rootTreeItem.getId());
-				outputStream.writeBoolean(rootTreeItem.isFolder());
-				outputStream.writeUTF(rootTreeItem.getDisplayName());
-				outputStream.writeUTF(rootTreeItem.getName());
-				outputStream.writeLong(rootTreeItem.getSize());
 				outputStream.writeUTF(rootTreeItem.getPath());
-				if (rootTreeItem.isFolder()) {
-					outputStream.writeInt(rootTreeItem.getChildren().size());
-					sendSubfolders(rootTreeItem);
-				}
 				treeIndex++;
 				System.out.println("Finished sending " + rootTreeItem.getName());
 			}
 			nextDownloadId = ((FileTreeItem) downloads.get(treeIndex-1)).getId() + 1;
 		}
 		downloadsQueued = false;
+		Main.startDownload(nftController);
 	}
 
-	private void recvQueuedDownloads() throws IOException { //SWITCH THIS TO RELY ONLY ON DOWNLOAD PATH AND NOT RECEIVE SUBITEMS
-		//root node info
+	private void recvQueuedDownloads() throws IOException {
 		int id = inputStream.readInt();
-		boolean folder = inputStream.readBoolean();
-		String displayName = inputStream.readUTF();
-		String name = inputStream.readUTF();
-		long size = inputStream.readLong();
 		String path = inputStream.readUTF();
-		FileTreeItem newUpload = new FileTreeItem(displayName, name, size, folder, id, path);
-		if (folder) {
-			int children = inputStream.readInt();
-			recvSubfolders(newUpload, children, true);
-		}
+		FileTreeItem newUpload = FileTreeItem.idPathToUpload(path, id, nftController.getSendables());
 		synchronized (nftController.getUploads()) {
 			nftController.getUploads().add(newUpload);
 			System.out.println("Finished receiving " + newUpload.getName());
@@ -202,7 +183,7 @@ public class TransferControlThread extends NetThread {
 	}
 
 	@Override
-	void afterConnection() throws InterruptedException, IOException {// CHANGE THIS LATER! if the connection dies, this should not be caught and this thread should terminate
+	void afterConnection() throws IOException {// CHANGE THIS LATER! if the connection dies, this should not be caught and this thread should terminate
 		System.out.println("Transfer control thread connected");
 		int opCode = 0;
 		while (!exit) {

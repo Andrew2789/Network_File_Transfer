@@ -1,5 +1,6 @@
 package GUI;
 
+import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.AnchorPane;
@@ -18,6 +19,7 @@ public class ProgressTreeCell extends AnchorPane {
 
 		progressBar = new ProgressBar();
 		progressBar.setProgress(0);
+		progressBar.setMinHeight(20);
 		progressBar.maxWidth(Double.MAX_VALUE);
 		progressBar.maxHeight(Double.MAX_VALUE);
 		this.getChildren().add(progressBar);
@@ -40,8 +42,14 @@ public class ProgressTreeCell extends AnchorPane {
 		return labelText;
 	}
 
+	public double getProgress() {
+		return progressBar.getProgress();
+	}
+
 	public void setProgress(double progress) {
-		progressBar.setProgress(progress);
-		text.setText(String.format("%.1f%%  %s", progress*100, labelText));
+		Platform.runLater(() -> {
+			progressBar.setProgress(progress);
+			text.setText(String.format("%.1f%%  %s", progress * 100, labelText));
+		});
 	}
 }

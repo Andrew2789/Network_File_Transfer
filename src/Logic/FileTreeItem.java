@@ -6,7 +6,11 @@ import java.io.FileInputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.regex.Pattern;
+import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -24,6 +28,8 @@ public class FileTreeItem extends TreeItem {
 	private boolean folder;
 	private int id = NOT_ROOT;
 	private static final String[] fileSizeUnits = {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
+	private static final String fileSymbol = "\uD83D\uDCC4";
+	private static final String folderSymbol = "\uD83D\uDCC1";
 
 	/**
 	 * Constructor for a sendable tree item from a File object
@@ -31,7 +37,7 @@ public class FileTreeItem extends TreeItem {
 	 * @param size		The size of the file/folder
 	 */
 	public FileTreeItem(File file, long size) {
-		super(String.format("%s (%s)", file.getName(), generate3SFSizeString(size)));
+		super(String.format("%s %s (%s)", file.isDirectory() ? folderSymbol : fileSymbol, file.getName(), generate3SFSizeString(size)));
 		name = file.getName();
 		this.size = size;
 		folder = file.isDirectory();
@@ -44,15 +50,26 @@ public class FileTreeItem extends TreeItem {
 	 * @param size		Size of the receivable tree item
 	 * @param folder 	Whether the receivable tree item is a folder or file
 	 */
-	public FileTreeItem(String displayName, String name, long size, boolean folder, boolean progressBar) {
-		super();
-		if (progressBar) {
-			this.setValue(new ProgressTreeCell(displayName));
-		} else {
-			this.setValue(displayName);
-		}
+	public FileTreeItem(String displayName, String name, long size, boolean folder) {
+		super(displayName);
 		this.name = name;
 		this.size = size;
+		this.folder = folder;
+	}
+
+	/**
+	 * Constructor for a upload/download tree item
+	 * @param displayName Name displayed on the TreeView
+	 * @param name 		Name of the upload/download tree item
+	 * @param size		Size of the upload/download tree item
+	 * @param path		Relative path of the upload/download tree item
+	 * @param folder 	Whether the upload/download tree item is a folder or file
+	 */
+	public FileTreeItem(String displayName, String name, long size, boolean folder, String path) {
+		super(new ProgressTreeCell(displayName));
+		this.name = name;
+		this.size = size;
+		this.path = path;
 		this.folder = folder;
 	}
 
@@ -62,7 +79,7 @@ public class FileTreeItem extends TreeItem {
 	 * @param id		The id of the sendable tree item
 	 */
 	public FileTreeItem(File file, long size, int id) {
-		super(String.format("%s (%s)", file.getName(), generate3SFSizeString(size)));
+		super(String.format("%s %s (%s)", file.isDirectory() ? folderSymbol : fileSymbol, file.getName(), generate3SFSizeString(size)));
 		name = file.getName();
 		this.size = size;
 		path = file.getAbsolutePath();
@@ -116,16 +133,6 @@ public class FileTreeItem extends TreeItem {
 		return !(id == NOT_ROOT);
 	}
 
-	public String getDisplayName() {
-		String displayName;
-		try {
-			displayName = (String)getValue();
-		} catch (ClassCastException e) {
-			displayName = ((ProgressTreeCell)getValue()).getText();
-		}
-		return displayName;
-	}
-
 	public String getPath() {
 		if (path != null)
 			return path;
@@ -141,21 +148,117 @@ public class FileTreeItem extends TreeItem {
 	}
 
 	/**
-	 * Make a deep copy of a FileTreeItem used to represent a receivable folder
-	 * @return A deep copy of this object
+	 * Get the name of this tree item displayed on the GUI
+	 * @return The display name
 	 */
-	public FileTreeItem makeReceivableCopy(int id) {
+	public String getDisplayName() {
+		String displayName;
+		try {
+			displayName = (String)getValue();
+		} catch (ClassCastException e) {
+			displayName = ((ProgressTreeCell)getValue()).getText();
+		}
+		return displayName;
+	}
+
+	public double getProgress() {
+		return ((ProgressTreeCell)getValue()).getProgress();
+	}
+
+	/**
+	 * Set the progress of the progress bar
+	 * @param progress The new progress value to set
+	 */
+	public void setProgress(double progress) {
+		((ProgressTreeCell)getValue()).setProgress(progress);
+	}
+
+	public void updateProgress() {
+		if (isFolder()) {
+			FileTreeItem childItem;
+			double progress = 0;
+			for (Object child : getChildren()) {
+				childItem = (FileTreeItem)child;
+				if (childItem.isFolder()) {
+					childItem.updateProgress();
+				}
+				progress += ((double)childItem.getSize())/size*childItem.getProgress();
+			}
+			setProgress(progress);
+		}
+	}
+
+	/**
+	 * Make a new download item from a receivable
+	 * @return A new download root tree item
+	 */
+	public FileTreeItem receivableToDownload(int id) {
 		FileTreeItem nextParent = this;
 		LinkedList<String> pathString = new LinkedList<>();
+		pathString.add(nextParent.getName());
 		while (!nextParent.isRoot()) {
 			nextParent = (FileTreeItem)nextParent.getParent();
-			pathString.add(nextParent.getName());
+			pathString.addFirst(nextParent.getName());
 		}
 		int rootId = nextParent.getId();
 
 		FileTreeItem copy;
-		copy = new FileTreeItem(getDisplayName(), name, size, isFolder(), id, String.format("%d/%s", rootId, String.join("/", pathString)));
-		copySubfolders(copy, this);
+		copy = new FileTreeItem(getDisplayName(), name, size, isFolder(), id, String.format("%d//%s", rootId, String.join("/", pathString)));
+		pathString.removeLast();
+		copySubfolders(copy, this, String.join("/", pathString));
+		return copy;
+	}
+
+	/**
+	 * Make new upload item from a sendable id path
+	 * @return A new upload root tree item
+	 */
+	public static FileTreeItem idPathToUpload(String path, int uploadId, ObservableList sendables) {
+		String[] pathComponents = path.split("//");
+		int sendableId = Integer.parseInt(pathComponents[0]);
+		LinkedList<String> pathComponentsList = new LinkedList<>(Arrays.asList(pathComponents[1].split("/")));
+		pathComponentsList.removeFirst();
+		FileTreeItem rootItem = null;
+		FileTreeItem childItem;
+		synchronized (sendables) {
+			for (Object rootSendable : sendables) {
+				rootItem = (FileTreeItem) rootSendable;
+				if (rootItem.getId() == sendableId) {
+					break;
+				}
+			}
+			if (rootItem == null) {
+				throw new IllegalStateException("Could not find sendable with ID " + sendableId);
+			}
+			childItem = rootItem;
+			boolean found;
+			for (String pathComponent: pathComponentsList) {
+				found = false;
+				for (Object child : childItem.getChildren()) {
+					if (((FileTreeItem) child).getName().equals(pathComponent)) {
+						childItem = ((FileTreeItem) child);
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					throw new IllegalStateException("Sendable path not mappable to sendable.");
+				}
+			}
+		}
+		String rootPath;
+		if (pathComponentsList.size() > 0) {
+			pathComponentsList.removeLast();
+			rootPath = rootItem.getPath() + File.separatorChar + String.join(File.separator, pathComponentsList);
+		}
+		else {
+			LinkedList rootPathList = new LinkedList<>(Arrays.asList(rootItem.getPath().split(Pattern.quote(File.separator))));
+			rootPathList.removeLast();
+			rootPath = String.join(File.separator, rootPathList);
+		}
+		FileTreeItem copy;
+		copy = new FileTreeItem(childItem.getDisplayName(), childItem.getName(), childItem.getSize(), childItem.isFolder(), uploadId, rootPath);
+		copySubfolders(copy, childItem, rootPath);
 		return copy;
 	}
 
@@ -164,14 +267,15 @@ public class FileTreeItem extends TreeItem {
 	 * @param copy		The copy object to have subfolders added
 	 * @param original	The original object to copy subfolders from
 	 */
-	private void copySubfolders(FileTreeItem copy, FileTreeItem original) {
+	private static void copySubfolders(FileTreeItem copy, FileTreeItem original, String path) {
 		FileTreeItem newItem;
 		FileTreeItem currentItem;
+		path = path + File.separatorChar + original.getName();
 		for (Object child : original.getChildren()) {
 			currentItem = (FileTreeItem) child;
-			newItem = new FileTreeItem(currentItem.getDisplayName(), currentItem.getName(), currentItem.getSize(), currentItem.isFolder(), true);
+			newItem = new FileTreeItem(currentItem.getDisplayName(), currentItem.getName(), currentItem.getSize(), currentItem.isFolder(), path);
 			if (currentItem.isFolder()) {
-				copySubfolders(newItem, currentItem);
+				copySubfolders(newItem, currentItem, path);
 			}
 			copy.getChildren().add(newItem);
 		}

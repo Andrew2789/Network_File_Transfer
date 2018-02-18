@@ -23,26 +23,28 @@ public class Main extends Application {
 
     public static void clientTransferThreads(String ip, int port1, int port2, NftController nftController) {
         writeThread = new TransferThread(ip, port1, nftController);
-        readThread = new TransferThread(writeThread, nftController);
         transferControlThread = new TransferControlThread(ip, port2, nftController);
         writeThread.start();
-        readThread.start();
         transferControlThread.start();
     }
 
     public static void hostTransferThreads(int port1, int port2, NftController nftController) {
         writeThread = new TransferThread(port1, nftController);
-        readThread = new TransferThread(writeThread, nftController);
         transferControlThread = new TransferControlThread(port2, nftController);
         writeThread.start();
-        readThread.start();
         transferControlThread.start();
     }
 
     public static void killTransferThreads() {
-        writeThread.exit();
-        readThread.exit();
-        transferControlThread.exit();
+    	if (writeThread != null) {
+			writeThread.exit();
+		}
+		if (readThread != null) {
+			readThread.exit();
+		}
+		if (transferControlThread != null) {
+			transferControlThread.exit();
+		}
         writeThread = null;
         readThread = null;
         transferControlThread = null;
@@ -80,7 +82,19 @@ public class Main extends Application {
         writeThread.startTransfer();
     }
 
-    public static void startDownlaod() {
+    public static void startDownload(NftController nftController) {
+        if (readThread == null) {
+            while (!writeThread.streamsReady()) {
+                try {
+                	System.out.println("waiting for streams to be ready");
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+            readThread = new TransferThread(writeThread, nftController);
+			readThread.start();
+        }
         readThread.startTransfer();
     }
 
@@ -98,15 +112,8 @@ public class Main extends Application {
 
     @Override
     public void stop() {
-        if (writeThread != null) {
-            writeThread.exit();
-        }
-        if (readThread != null) {
-            readThread.exit();
-        }
-        if (transferControlThread != null) {
-            transferControlThread.exit();
-        }
+    	System.out.println("Exiting GUI, killing transfer threads");
+        killTransferThreads();
         Platform.exit();
     }
 

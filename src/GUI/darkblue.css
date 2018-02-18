@@ -69,6 +69,7 @@
 
 .tree-view,
 .tree-view:focused {
+	-fx-font-size: 14px;
 	-fx-focus-color: transparent;
 	-fx-faint-focus-color: transparent;
 	-fx-background-color: #396a93;

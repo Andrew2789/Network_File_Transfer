@@ -48,6 +48,10 @@ public abstract class NetThread extends Thread {
 
 	abstract void afterConnection() throws InterruptedException, IOException;
 
+	public boolean streamsReady() {
+		return (inputStream != null && outputStream != null);
+	}
+
 	public void run() {
 		if (ownsSocket) { //Only set up socket connections and io streams if owner, otherwise it should already be done
 			if (ipAddress != null) {
