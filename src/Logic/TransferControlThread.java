@@ -185,7 +185,10 @@ public class TransferControlThread extends NetThread {
 	@Override
 	void afterConnection() throws IOException {// CHANGE THIS LATER! if the connection dies, this should not be caught and this thread should terminate
 		System.out.println("Transfer control thread connected");
-		int opCode = 0;
+		outputStream.writeUTF(nftController.getNickname());
+		nftController.setPeerNickname(inputStream.readUTF());
+
+		int opCode;
 		while (!exit) {
 			/*Main loop, check if sendables or download queue changed and notify other.
 			1: new sendable

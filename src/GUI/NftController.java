@@ -120,10 +120,14 @@ public class NftController implements Initializable {
 
 	public String getDownloadPath() {
     	if (relativeDownloadPath.isSelected()) {
-    		return String.format("%s%s%s", ClassLoader.getSystemClassLoader().getResource(".").getPath(), File.separatorChar, downloadPathInput.getText());
+    		return String.format("%s%s%s", Main.getLocation(), File.separatorChar, downloadPathInput.getText());
 		} else {
 			return downloadPathInput.getText();
 		}
+	}
+
+	public String getNickname() {
+    	return nicknameInput.getText();
 	}
 
 	private void setSettingsEnabled(boolean enabled) {
@@ -164,8 +168,14 @@ public class NftController implements Initializable {
 			receivableTree.setDisable(false);
 			sessionSetupTitle.setText("Connection Info");
 			sessionSetupControls.setVisible(false);
-			sessionInfoLabel.setText(String.format("You (%s) are connected to %s (%s) on ports %s and %s", nicknameInput.getText(), ipInput.getText(), "DefaultDuck", port1Input.getText(), port2Input.getText()));
+			sessionInfoLabel.setText(String.format("You (%s) are connected to %s (%s) on ports %s and %s", nicknameInput.getText(), ipInput.getText(), "LOADING", port1Input.getText(), port2Input.getText()));
 			sessionInfoLabel.setVisible(true);
+		});
+	}
+
+	public void setPeerNickname(String peerNickname) {
+		Platform.runLater(() -> {
+			sessionInfoLabel.setText(String.format("You (%s) are connected to %s (%s) on ports %s and %s", nicknameInput.getText(), ipInput.getText(), peerNickname, port1Input.getText(), port2Input.getText()));
 		});
 	}
 

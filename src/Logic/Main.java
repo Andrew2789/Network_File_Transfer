@@ -2,8 +2,11 @@ package Logic;
 
 import GUI.NftController;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URISyntaxException;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -18,9 +21,14 @@ public class Main extends Application {
     private static TransferThread writeThread = null;
     private static TransferThread readThread = null;
     private static TransferControlThread transferControlThread = null;
+    private static String location;
     private static int nextSendableRootId = -1;
     private static int nextDownloadRootId = -1;
     private static Scene scene;
+
+    public static String getLocation() {
+    	return location;
+	}
 
     public static void setStyleSheet(String newSheet) {
     	scene.getStylesheets().remove(0);
@@ -105,17 +113,23 @@ public class Main extends Application {
     }
 
     @Override
-    public void start(Stage stage) throws Exception {
+    public void start(Stage stage) {
         /*System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream("stderr.log")), true));
         System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream("stdout.log")), true));*/
         stage.setTitle("Network File Transfer");
         stage.getIcons().add(new Image(getClass().getResourceAsStream("/GUI/img/wateryarrow.png")));
-        Parent root = FXMLLoader.load(getClass().getResource("/GUI/nft.fxml"));
-        Scene scene = new Scene(root, 1366, 768);
-        stage.setScene(scene);
-        stage.show();
-		scene.getStylesheets().add("/GUI/darkblue.css");
-        this.scene = scene;
+        try {
+			location = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile().getAbsolutePath();
+			Parent root = FXMLLoader.load(getClass().getResource("/GUI/nft.fxml"));
+			Scene scene = new Scene(root, 1366, 768);
+			stage.setScene(scene);
+			stage.show();
+			scene.getStylesheets().add("/GUI/darkblue.css");
+			this.scene = scene;
+		} catch (IOException | URISyntaxException e) {
+        	e.printStackTrace();
+        	stop();
+		}
     }
 
     @Override
