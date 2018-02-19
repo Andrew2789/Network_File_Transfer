@@ -21,15 +21,21 @@ import javafx.scene.image.ImageView;
  * contents, and stores enough information for file/folder paths to be retrieved from the tree.
  */
 public class FileTreeItem extends TreeItem {
+	//Constants
 	private static final int NOT_ROOT = -1;
-	private String name;
-	private String path = null;
-	private long size;
-	private boolean folder;
-	private int id = NOT_ROOT;
 	private static final String[] fileSizeUnits = {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
 	private static final String fileSymbol = "\uD83D\uDCC4";
 	private static final String folderSymbol = "\uD83D\uDCC1";
+
+	//Mandatory variables (set by all constructors)
+	private String name;
+	private long size;
+	private boolean folder;
+
+	//Optional variables (only set by some constructors)
+	private int id = NOT_ROOT;
+	private String path = null;
+	private double progress;
 
 	/**
 	 * Constructor for a sendable tree item from a File object
@@ -66,7 +72,8 @@ public class FileTreeItem extends TreeItem {
 	 * @param folder 	Whether the upload/download tree item is a folder or file
 	 */
 	public FileTreeItem(String displayName, String name, long size, boolean folder, String path) {
-		super(new ProgressTreeCell(displayName));
+		super();
+		setValue(new ProgressTreeCell(displayName, this));
 		this.name = name;
 		this.size = size;
 		this.path = path;
@@ -109,7 +116,9 @@ public class FileTreeItem extends TreeItem {
 	 * @param path		Relative path to the download/upload from the associated root receivable/sendable
 	 */
 	public FileTreeItem(String displayName, String name, long size, boolean folder, int id, String path) {
-		super(new ProgressTreeCell(displayName));
+		super();
+		setValue(new ProgressTreeCell(displayName, this));
+		this.progress = 0;
 		this.name = name;
 		this.size = size;
 		this.folder = folder;
@@ -162,30 +171,52 @@ public class FileTreeItem extends TreeItem {
 	}
 
 	public double getProgress() {
-		return ((ProgressTreeCell)getValue()).getProgress();
+		return progress;
 	}
 
 	/**
 	 * Set the progress of the progress bar
-	 * @param progress The new progress value to set
+	 * @param progress	The new progress value to set
 	 */
 	public void setProgress(double progress) {
-		((ProgressTreeCell)getValue()).setProgress(progress);
+		this.progress = progress;
+		((ProgressTreeCell)getValue()).updateProgress();
 	}
 
 	public void updateProgress() {
-		if (isFolder()) {
-			FileTreeItem childItem;
+		if (folder) {
 			double progress = 0;
+			FileTreeItem childItem;
 			for (Object child : getChildren()) {
-				childItem = (FileTreeItem)child;
+				childItem = (FileTreeItem) child;
 				if (childItem.isFolder()) {
 					childItem.updateProgress();
 				}
-				progress += ((double)childItem.getSize())/size*childItem.getProgress();
+				progress += ((double) childItem.getSize()) / size * childItem.getProgress();
 			}
 			setProgress(progress);
 		}
+	}
+
+	public void updateProgress(LinkedList<String> childPath) {
+		double progress = 0;
+		if (folder) {
+			boolean foundChild = false;
+			FileTreeItem childItem;
+			for (Object child : getChildren()) {
+				childItem = (FileTreeItem) child;
+				if (childPath.size() > 0 && !foundChild && childItem.getName().equals(childPath.getFirst())) {
+					childPath.removeFirst();
+					childItem.updateProgress(childPath);
+					foundChild = true;
+				}
+				progress += ((double) childItem.getSize()) / size * childItem.getProgress();
+			}
+			if (!foundChild && childPath.size() != 0) {
+				throw new IllegalStateException("Not all children were found");
+			}
+ 		}
+		setProgress(progress);
 	}
 
 	/**
@@ -205,7 +236,7 @@ public class FileTreeItem extends TreeItem {
 		FileTreeItem copy;
 		copy = new FileTreeItem(getDisplayName(), name, size, isFolder(), id, String.format("%d//%s", rootId, String.join("/", pathString)));
 		pathString.removeLast();
-		copySubfolders(copy, this, String.join("/", pathString));
+		copySubfolders(copy, this, "");
 		return copy;
 	}
 

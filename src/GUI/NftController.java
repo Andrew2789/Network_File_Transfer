@@ -18,11 +18,18 @@ import javafx.scene.input.KeyCode;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
+import javafx.scene.layout.GridPane;
 import javafx.stage.DirectoryChooser;
 import javax.swing.JFileChooser;
 
 public class NftController implements Initializable {
     //Session setup elements
+	@FXML
+	private Label sessionSetupTitle;
+	@FXML
+	private Label sessionInfoLabel;
+	@FXML
+	private GridPane sessionSetupControls;
     @FXML
     private TextField nicknameInput;
     @FXML
@@ -124,6 +131,7 @@ public class NftController implements Initializable {
         port1Input.setDisable(!enabled);
         port2Input.setDisable(!enabled);
         hosting.setDisable(!enabled);
+        autoPort2.setDisable(!enabled || autoPort2.isSelected());
     }
 
     public void connectClicked() {
@@ -154,6 +162,10 @@ public class NftController implements Initializable {
 			uploadsTree.setDisable(false);
 			downloadsTree.setDisable(false);
 			receivableTree.setDisable(false);
+			sessionSetupTitle.setText("Connection Info");
+			sessionSetupControls.setVisible(false);
+			sessionInfoLabel.setText(String.format("You (%s) are connected to %s (%s) on ports %s and %s", nicknameInput.getText(), ipInput.getText(), "DefaultDuck", port1Input.getText(), port2Input.getText()));
+			sessionInfoLabel.setVisible(true);
 		});
 	}
 
@@ -192,7 +204,13 @@ public class NftController implements Initializable {
 		alert.showAndWait();
 
 		if (alert.getResult() == ButtonType.YES) {
-			Main.killTransferThreads();
+			disconnect();
+		}
+	}
+
+	public void disconnect() {
+		Main.killTransferThreads();
+		Platform.runLater(() -> {
 			connectionStatus.setText("Disconnected");
 			if (hosting.isSelected()) {
 				listenButton.setDisable(false);
@@ -204,7 +222,15 @@ public class NftController implements Initializable {
 			downloadsTree.setDisable(true);
 			receivableTree.setDisable(true);
 			setSettingsEnabled(true);
-		}
+
+			uploadsTree.getRoot().getChildren().clear();
+			downloadsTree.getRoot().getChildren().clear();
+			receivableTree.getRoot().getChildren().clear();
+
+			sessionSetupTitle.setText("Connection Setup");
+			sessionSetupControls.setVisible(true);
+			sessionInfoLabel.setVisible(false);
+		});
 	}
 
     public void hostingChanged() {
@@ -222,6 +248,14 @@ public class NftController implements Initializable {
 
     public void autoPort2Changed() {
     	port2Input.setDisable(autoPort2.isSelected());
+	}
+
+	public void themeChanged() {
+    	if (darkTheme.isSelected()) {
+			Main.setStyleSheet("/GUI/darkblue.css");
+		} else {
+			Main.setStyleSheet("/GUI/lightblue.css");
+    	}
 	}
 
     private boolean updateNumberField(String newValue, int max) {

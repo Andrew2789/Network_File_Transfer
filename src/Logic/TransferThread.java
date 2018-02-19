@@ -14,14 +14,16 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 
 public class TransferThread extends NetThread {
-
+	private static final int progressBarRefreshTime = 0;
 	private boolean active = false;
 	private boolean writing;
+	private long totalTransferred = 0;
 
 	public TransferThread(String ipAddress, int port, NftController nftController) {
 		super(ipAddress, port, nftController);
@@ -70,7 +72,7 @@ public class TransferThread extends NetThread {
 				return null;
 			}
 			toTransfer = new LinkedList<>();
-			System.out.println("Read this root from queue: " + nextItem.getPath());
+			System.out.println("Read this root from queue: " + nextItem.getPath() + File.separatorChar + nextItem.getName());
 			addSubfolders(nextItem, toTransfer);
 		}
 		return toTransfer;
@@ -83,15 +85,16 @@ public class TransferThread extends NetThread {
 		}
 	}
 
-	private void uploadNext(byte[] buffer) throws IOException, InterruptedException {
+	private void uploadNext(byte[] buffer) throws IOException {
 		FileInputStream fileInputStream;
 		LinkedList<FileTreeItem> toTransfer = readNextInQueue();
 		if (toTransfer == null) {
 			return;
 		}
-		toTransfer.getFirst().setProgress(1);
+
 		int read;
-		long totalRead;
+		long totalRead, lastRefresh = System.currentTimeMillis();
+		LinkedList<String> pathList;
 		for (FileTreeItem file : toTransfer) {
 			System.out.println("Beginning upload of " + file.getName());
 			try {
@@ -108,10 +111,16 @@ public class TransferThread extends NetThread {
 							read = fileInputStream.read(buffer);
 						}
 						totalRead += read;
+						totalTransferred += read;
 						outputStream.write(buffer, 0, read);
-						file.setProgress(((double) totalRead) / file.getSize());
-						sleep(100);
-						toTransfer.getFirst().updateProgress();
+
+						if (System.currentTimeMillis() - lastRefresh > progressBarRefreshTime) {
+							file.setProgress(((double) totalRead) / file.getSize());
+							pathList = new LinkedList<>(Arrays.asList(file.getPath().split("/")));
+							pathList.removeFirst();
+							toTransfer.getFirst().updateProgress(pathList);
+							lastRefresh = System.currentTimeMillis();
+						}
 					}
 					file.setProgress(1);
 					fileInputStream.close();
@@ -122,28 +131,43 @@ public class TransferThread extends NetThread {
 			}
 		}
 		System.out.println("Upload complete");
-		sleep(100);
 		toTransfer.getFirst().updateProgress();
 	}
 
-	private void downloadNext(byte[] buffer) throws IOException, InterruptedException {
+	private void downloadNext(byte[] buffer) throws IOException {
 		FileOutputStream fileOutputStream;
 		LinkedList<FileTreeItem> toTransfer = readNextInQueue();
 		if (toTransfer == null) {
 			return;
 		}
+
 		String downloadPath = nftController.getDownloadPath();
-		File newFolder = new File(downloadPath + File.separatorChar + toTransfer.get(0).getPath().split("//")[1]);
+		File newFolder;
+		boolean rootIsFile = false;
+		if (toTransfer.getFirst().isFolder()) {
+			newFolder = new File(downloadPath + File.separatorChar + toTransfer.getFirst().getName());
+		} else {
+			newFolder = new File(downloadPath);
+			rootIsFile = true;
+		}
 		newFolder.mkdirs();
 		FileTreeItem root = toTransfer.getFirst();
-		toTransfer.removeFirst();
+		if (root.isFolder()) {
+			toTransfer.removeFirst();
+		}
+
 		String fullPath;
 		int read;
-		long totalRead;
+		long totalRead, lastRefresh = System.currentTimeMillis();
+		LinkedList<String> pathList;
 		for (FileTreeItem file : toTransfer) {
 			System.out.println("Beginning download of " + file.getName());
 			try {
-				fullPath = downloadPath + File.separatorChar + String.join(File.separator, file.getPath().split("/")) + File.separatorChar + file.getName();
+				if (rootIsFile) {
+					fullPath = downloadPath + File.separatorChar + file.getName();
+				} else {
+					fullPath = downloadPath + File.separatorChar + String.join(File.separator, file.getPath().split("/")) + File.separatorChar + file.getName();
+				}
 				if (file.isFolder()) {
 					newFolder = new File(fullPath);
 					System.out.println(newFolder.getAbsolutePath() + newFolder.exists());
@@ -163,9 +187,16 @@ public class TransferThread extends NetThread {
 							read = inputStream.read(buffer);
 						}
 						totalRead += read;
+						totalTransferred += read;
 						fileOutputStream.write(buffer, 0, read);
-						file.setProgress(((double) totalRead) / file.getSize());
-						root.updateProgress();
+
+						if (System.currentTimeMillis() - lastRefresh > progressBarRefreshTime) {
+							file.setProgress(((double) totalRead) / file.getSize());
+							pathList = new LinkedList<>(Arrays.asList(file.getPath().split("/")));
+							pathList.removeFirst();
+							toTransfer.getFirst().updateProgress(pathList);
+							lastRefresh = System.currentTimeMillis();
+						}
 					}
 					file.setProgress(1);
 					fileOutputStream.close();
@@ -176,7 +207,6 @@ public class TransferThread extends NetThread {
 			}
 		}
 		System.out.println("Download complete");
-		sleep(100);
 		root.updateProgress();
 	}
 

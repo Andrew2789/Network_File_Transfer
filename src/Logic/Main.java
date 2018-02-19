@@ -20,6 +20,12 @@ public class Main extends Application {
     private static TransferControlThread transferControlThread = null;
     private static int nextSendableRootId = -1;
     private static int nextDownloadRootId = -1;
+    private static Scene scene;
+
+    public static void setStyleSheet(String newSheet) {
+    	scene.getStylesheets().remove(0);
+    	scene.getStylesheets().add(newSheet);
+	}
 
     public static void clientTransferThreads(String ip, int port1, int port2, NftController nftController) {
         writeThread = new TransferThread(ip, port1, nftController);
@@ -108,6 +114,8 @@ public class Main extends Application {
         Scene scene = new Scene(root, 1366, 768);
         stage.setScene(scene);
         stage.show();
+		scene.getStylesheets().add("/GUI/darkblue.css");
+        this.scene = scene;
     }
 
     @Override

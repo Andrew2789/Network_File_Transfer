@@ -106,6 +106,8 @@ public abstract class NetThread extends Thread {
 			}
 		}
 
+		nftController.disconnect();
+
 		if (inputStream != null) {
 			try {
 				inputStream.close();

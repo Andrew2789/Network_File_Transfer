@@ -1,5 +1,7 @@
 package GUI;
 
+import Logic.FileTreeItem;
+import java.io.File;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -9,9 +11,11 @@ public class ProgressTreeCell extends AnchorPane {
 	private ProgressBar progressBar;
 	private Label text;
 	private String labelText;
+	private FileTreeItem parent;
 
-	public ProgressTreeCell(String labelText) {
+	public ProgressTreeCell(String labelText, FileTreeItem parent) {
 		super();
+		this.parent = parent;
 		this.labelText = labelText;
 		this.maxHeight(Double.MAX_VALUE);
 		this.maxWidth(Double.MAX_VALUE);
@@ -42,12 +46,9 @@ public class ProgressTreeCell extends AnchorPane {
 		return labelText;
 	}
 
-	public double getProgress() {
-		return progressBar.getProgress();
-	}
-
-	public void setProgress(double progress) {
+	public void updateProgress() {
 		Platform.runLater(() -> {
+			double progress = parent.getProgress();
 			progressBar.setProgress(progress);
 			text.setText(String.format("%.1f%%  %s", progress * 100, labelText));
 		});
