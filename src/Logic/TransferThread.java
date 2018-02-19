@@ -110,6 +110,7 @@ public class TransferThread extends NetThread {
 						totalRead += read;
 						outputStream.write(buffer, 0, read);
 						file.setProgress(((double) totalRead) / file.getSize());
+						sleep(100);
 						toTransfer.getFirst().updateProgress();
 					}
 					file.setProgress(1);
@@ -202,7 +203,6 @@ public class TransferThread extends NetThread {
 					}
 				}
 			} else {
-				System.out.println("inactive" + writing);
 				sleep(250);
 			}
 		}

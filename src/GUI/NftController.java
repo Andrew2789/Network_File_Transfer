@@ -39,6 +39,8 @@ public class NftController implements Initializable {
     private Button connectButton;
     @FXML
     private Button listenButton;
+    @FXML
+	private CheckBox autoPort2;
 
     //Connection status elements
     @FXML
@@ -91,7 +93,7 @@ public class NftController implements Initializable {
     private Button removeSendable;
 
     private static final int portMin = 1024;
-    private static final int portMax = 65534;
+    private static final int portMax = 65535;
 
     public ObservableList getSendables() {
     	return sendableTree.getRoot().getChildren();
@@ -218,19 +220,23 @@ public class NftController implements Initializable {
         }
     }
 
+    public void autoPort2Changed() {
+    	port2Input.setDisable(autoPort2.isSelected());
+	}
+
     private boolean updateNumberField(String newValue, int max) {
-        boolean updateValue = true;
+        boolean revertValue = false;
         if (!newValue.isEmpty()) {
             try {
                 int fieldValue = Integer.parseInt(newValue);
                 if (fieldValue < 0 || fieldValue > max || newValue.charAt(0) == '0') {
-                    updateValue = false;
+					revertValue = true;
                 }
             } catch (NumberFormatException e) {
-                updateValue = false;
+				revertValue = true;
             }
         }
-        return updateValue;
+        return revertValue;
     }
 
     private boolean clientConnectReady() {
@@ -410,7 +416,20 @@ public class NftController implements Initializable {
         });
 
 		port1Input.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!updateNumberField(newValue, portMax)) {
+			boolean revertField;
+			if (autoPort2.isSelected()) {
+				revertField = updateNumberField(newValue, portMax-1);
+				if (!revertField) {
+					if (port1Input.getText().isEmpty()) {
+						port2Input.setText("");
+					} else {
+						port2Input.setText(Integer.toString(Integer.parseInt(port1Input.getText()) + 1));
+					}
+				}
+			} else {
+				revertField = updateNumberField(newValue, portMax);
+			}
+			if (revertField) {
 				((StringProperty)observable).setValue(oldValue);
 			}
 			if (hosting.isSelected()) {
@@ -421,13 +440,15 @@ public class NftController implements Initializable {
 		});
 
 		port2Input.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!updateNumberField(newValue, portMax)) {
-				((StringProperty)observable).setValue(oldValue);
-			}
-			if (hosting.isSelected()) {
-				listenButton.setDisable(!hostListenReady());
-			} else {
-				connectButton.setDisable(!clientConnectReady());
+			if (!autoPort2.isSelected()) {
+				if (updateNumberField(newValue, portMax)) {
+					((StringProperty) observable).setValue(oldValue);
+				}
+				if (hosting.isSelected()) {
+					listenButton.setDisable(!hostListenReady());
+				} else {
+					connectButton.setDisable(!clientConnectReady());
+				}
 			}
 		});
 
