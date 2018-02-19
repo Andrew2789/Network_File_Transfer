@@ -15,11 +15,11 @@ public class ProgressTreeCell extends AnchorPane {
 		this.labelText = labelText;
 		this.maxHeight(Double.MAX_VALUE);
 		this.maxWidth(Double.MAX_VALUE);
-		this.setMinHeight(24);
+		this.setMinHeight(28);
 
 		progressBar = new ProgressBar();
 		progressBar.setProgress(0);
-		progressBar.setMinHeight(20);
+		progressBar.setMinHeight(26);
 		progressBar.maxWidth(Double.MAX_VALUE);
 		progressBar.maxHeight(Double.MAX_VALUE);
 		this.getChildren().add(progressBar);
