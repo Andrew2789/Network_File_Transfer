@@ -16,6 +16,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.regex.Pattern;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 
@@ -37,6 +38,10 @@ public class TransferThread extends NetThread {
 	public TransferThread(TransferThread master, NftController nftController) {
 		super(master.getSocket(), master.getReadStream(), null, nftController);
 		writing = false;
+	}
+
+	public boolean isActive() {
+		return active;
 	}
 
 	private Socket getSocket() {
@@ -84,6 +89,12 @@ public class TransferThread extends NetThread {
 		}
 	}
 
+	private void updateProgress(double progress, FileTreeItem file, FileTreeItem root) {
+		file.setProgress(progress);
+		LinkedList<FileTreeItem> pathList = file.getPathFromRoot();
+		root.updateProgress(pathList);
+	}
+
 	private void uploadNext(byte[] buffer) throws IOException {
 		FileInputStream fileInputStream;
 		LinkedList<FileTreeItem> toTransfer = readNextInQueue();
@@ -92,17 +103,15 @@ public class TransferThread extends NetThread {
 		}
 
 		int read;
-		long totalRead;
-
-		long currentTime, lastRefresh = System.currentTimeMillis();
-		long readSinceLastUpdate = 0, lastSpeedUpdate = lastRefresh;
-		LinkedList<String> pathList;
+		long totalRead, currentTime, lastRefresh;
+		long readSinceLastUpdate = 0, lastSpeedUpdate = System.currentTimeMillis();
 		for (FileTreeItem file : toTransfer) {
 			System.out.println("Beginning upload of " + file.getName());
 			try {
 				if (!file.isFolder()) {
 					fileInputStream = new FileInputStream(String.join(File.separator, file.getPath().split("/")) + File.separatorChar + file.getName());
 					totalRead = 0;
+					lastRefresh = System.currentTimeMillis();
 					while (totalRead < file.getSize()) {
 						if (exit) {
 							return;
@@ -124,17 +133,11 @@ public class TransferThread extends NetThread {
 						}
 
 						if (currentTime - lastRefresh > progressBarRefreshTime) {
-							file.setProgress(((double) totalRead) / file.getSize());
-							pathList = new LinkedList<>(Arrays.asList(file.getPath().split("/")));
-							pathList.removeFirst();
-							toTransfer.getFirst().updateProgress(pathList);
+							updateProgress(((double) totalRead) / file.getSize(), file, toTransfer.getFirst());
 							lastRefresh = currentTime;
 						}
 					}
-					file.setProgress(1);
-					pathList = new LinkedList<>(Arrays.asList(file.getPath().split("/")));
-					pathList.removeFirst();
-					toTransfer.getFirst().updateProgress(pathList);
+					updateProgress(1, file, toTransfer.getFirst());
 					fileInputStream.close();
 				}
 			} catch (FileNotFoundException e) {
@@ -171,9 +174,8 @@ public class TransferThread extends NetThread {
 
 		String fullPath;
 		int read;
-		long totalRead;
-		long currentTime, lastRefresh = System.currentTimeMillis();
-		long readSinceLastUpdate = 0, lastSpeedUpdate = lastRefresh;
+		long totalRead, currentTime, lastRefresh;
+		long readSinceLastUpdate = 0, lastSpeedUpdate = System.currentTimeMillis();
 		LinkedList<String> pathList;
 		for (FileTreeItem file : toTransfer) {
 			System.out.println("Beginning download of " + file.getName());
@@ -192,6 +194,7 @@ public class TransferThread extends NetThread {
 				} else {
 					fileOutputStream = new FileOutputStream(fullPath);
 					totalRead = 0;
+					lastRefresh = System.currentTimeMillis();
 					while (totalRead < file.getSize()) {
 						if (exit) {
 							return;
@@ -213,17 +216,11 @@ public class TransferThread extends NetThread {
 						}
 
 						if (currentTime - lastRefresh > progressBarRefreshTime) {
-							file.setProgress(((double) totalRead) / file.getSize());
-							pathList = new LinkedList<>(Arrays.asList(file.getPath().split("/")));
-							pathList.removeFirst();
-							toTransfer.getFirst().updateProgress(pathList);
+							updateProgress(((double) totalRead) / file.getSize(), file, root);
 							lastRefresh = currentTime;
 						}
 					}
-					file.setProgress(1);
-					pathList = new LinkedList<>(Arrays.asList(file.getPath().split("/")));
-					pathList.removeFirst();
-					toTransfer.getFirst().updateProgress(pathList);
+					updateProgress(1, file, root);
 					fileOutputStream.close();
 				}
 			} catch (FileNotFoundException e) {

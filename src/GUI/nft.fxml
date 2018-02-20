@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
@@ -94,18 +93,21 @@
       						<Font name="System Bold" size="18.0" />
       					</font>
       				</Label>
-      				<LineChart fx:id="netSpeedGraph" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" GridPane.columnIndex="2" GridPane.rowIndex="1" GridPane.rowSpan="2">
+      				<LineChart fx:id="netSpeedGraph" animated="false" createSymbols="false" horizontalGridLinesVisible="false" legendVisible="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" verticalGridLinesVisible="false" GridPane.columnIndex="2" GridPane.rowIndex="1" GridPane.rowSpan="2">
       					<xAxis>
-      						<CategoryAxis side="BOTTOM" />
+      						<NumberAxis animated="false" autoRanging="false" minorTickCount="1" minorTickVisible="false" side="BOTTOM" tickLabelGap="1.0" tickLabelsVisible="false" tickMarkVisible="false" upperBound="49.0" />
       					</xAxis>
       					<yAxis>
-      						<NumberAxis side="LEFT" />
+      						<NumberAxis animated="false" minorTickVisible="false" side="LEFT" upperBound="25.0">
+                           <tickLabelFont>
+                              <Font size="10.0" />
+                           </tickLabelFont></NumberAxis>
       					</yAxis>
                      <GridPane.margin>
-                        <Insets bottom="-15.0" />
+                        <Insets bottom="-5.0" />
                      </GridPane.margin>
       				</LineChart>
-      				<Label fx:id="upSpeedLabel" alignment="BOTTOM_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="⬆ 0MB/s" GridPane.columnIndex="3" GridPane.rowIndex="1">
+      				<Label fx:id="upSpeedLabel" alignment="BOTTOM_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="⬆ 0B/s" GridPane.columnIndex="3" GridPane.rowIndex="1">
       					<font>
       						<Font size="16.0" />
       					</font>
@@ -113,7 +115,7 @@
       						<Insets />
       					</GridPane.margin>
       				</Label>
-      				<Label fx:id="downSpeedLabel" alignment="TOP_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="⬇ 0MB/s" textAlignment="CENTER" GridPane.columnIndex="3" GridPane.rowIndex="2">
+      				<Label fx:id="downSpeedLabel" alignment="TOP_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="⬇ 0B/s" textAlignment="CENTER" GridPane.columnIndex="3" GridPane.rowIndex="2">
       					<font>
       						<Font size="16.0" />
       					</font>

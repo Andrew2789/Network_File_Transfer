@@ -106,10 +106,20 @@
 	-fx-stroke: #6c9dc6;
 }
 .default-color0.chart-series-line {
-	-fx-stroke: blue;
+	-fx-stroke: #bbffb7;
+	-fx-stroke-width: 2px;
 }
 .default-color1.chart-series-line {
-	-fx-stroke: yellow;
+	-fx-stroke: #c1b7ff;
+	-fx-stroke-width: 2px;
+}
+
+
+#upSpeedLabel {
+	-fx-text-fill: #bbffb7;
+}
+#downSpeedLabel {
+	-fx-text-fill: #c1b7ff;
 }
 
 

@@ -112,6 +112,20 @@ public class Main extends Application {
         readThread.startTransfer();
     }
 
+	public static boolean writeThreadActive() {
+    	if (writeThread == null) {
+    		return false;
+		}
+ 		return writeThread.isActive();
+	}
+
+	public static boolean readThreadActive() {
+		if (readThread == null) {
+			return false;
+		}
+		return readThread.isActive();
+	}
+
     @Override
     public void start(Stage stage) {
         /*System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream("stderr.log")), true));

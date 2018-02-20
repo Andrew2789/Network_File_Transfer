@@ -14,6 +14,9 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.chart.XYChart.Data;
+import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
@@ -109,7 +112,12 @@ public class NftController implements Initializable {
 
 	private ScrollBar horizUploadTreeScrollBar, horizDownloadTreeScrollBar, horizSendableTreeScrollBar, horizReceivableTreeScrollBar;
 	private long uploadSpeed = 0, downloadSpeed = 0;
+	private double uploadSpeedAvg = 0, downloadSpeedAvg = 0;
+	private int uploadSpeedSeriesUpdate = 0, downloadSpeedSeriesUpdate = 0;
 	private String uploadSymbol = "⬆", downloadSymbol = "⬇";
+	private final int ticksPerGraphUpdate = 5, maxGraphDataPoints = 50;
+
+	private XYChart.Series<Integer, Double> upSpeedSeries = new Series<>(), downSpeedSeries = new Series<>();
 
 	private static final int portMin = 1024;
 	private static final int portMax = 65535;
@@ -146,6 +154,31 @@ public class NftController implements Initializable {
 		uploadSpeed = speed;
 		Platform.runLater(() -> {
 			upSpeedLabel.setText(uploadSymbol + " " + FileTreeItem.generate3SFSizeString(uploadSpeed) + "/s");
+			if (uploadSpeedAvg == 0) {
+				uploadSpeedAvg = ((double) uploadSpeed) / 1000000;
+			} else {
+				uploadSpeedAvg = (uploadSpeedAvg * (ticksPerGraphUpdate-1) + ((double) uploadSpeed) / 1000000)/ticksPerGraphUpdate;
+			}
+			if (uploadSpeedSeriesUpdate == 0) {
+				if (upSpeedSeries.getData().size() > maxGraphDataPoints) {
+					upSpeedSeries.getData().remove(0);
+				}
+				for (XYChart.Data data : upSpeedSeries.getData()) {
+					data.setXValue((int) data.getXValue() + 1);
+				}
+				if (Main.readThreadActive()) {
+					if (downSpeedSeries.getData().size() == maxGraphDataPoints) {
+						downSpeedSeries.getData().remove(0);
+					}
+					for (XYChart.Data data : downSpeedSeries.getData()) {
+						data.setXValue((int) data.getXValue() + 1);
+					}
+					downSpeedSeries.getData().add(new XYChart.Data<>(0, downloadSpeedAvg));
+				}
+				upSpeedSeries.getData().add(new XYChart.Data<>(0, uploadSpeedAvg));
+				uploadSpeedSeriesUpdate = ticksPerGraphUpdate;
+			}
+			uploadSpeedSeriesUpdate--;
 		});
 	}
 
@@ -153,6 +186,24 @@ public class NftController implements Initializable {
 		downloadSpeed = speed;
 		Platform.runLater(() -> {
 			downSpeedLabel.setText(downloadSymbol + " " + FileTreeItem.generate3SFSizeString(downloadSpeed) + "/s");
+			if (downloadSpeedAvg == 0) {
+				downloadSpeedAvg = ((double) downloadSpeed) / 1000000;
+			} else {
+				downloadSpeedAvg = (downloadSpeedAvg * (ticksPerGraphUpdate-1) + ((double) downloadSpeed) / 1000000)/ticksPerGraphUpdate;
+			}
+			if (downloadSpeedSeriesUpdate == 0) {
+				if (!Main.writeThreadActive()) {
+					if (downSpeedSeries.getData().size() == maxGraphDataPoints) {
+						downSpeedSeries.getData().remove(0);
+					}
+					for (XYChart.Data data : downSpeedSeries.getData()) {
+						data.setXValue((int) data.getXValue() + 1);
+					}
+					downSpeedSeries.getData().add(new XYChart.Data<>(0, downloadSpeedAvg));
+				}
+				downloadSpeedSeriesUpdate = ticksPerGraphUpdate;
+			}
+			downloadSpeedSeriesUpdate--;
 		});
 	}
 
@@ -262,6 +313,9 @@ public class NftController implements Initializable {
 			uploadsTree.getRoot().getChildren().clear();
 			downloadsTree.getRoot().getChildren().clear();
 			receivableTree.getRoot().getChildren().clear();
+
+			setUploadSpeed(0);
+			setDownloadSpeed(0);
 
 			sessionSetupTitle.setText("Connection Setup");
 			sessionSetupControls.setVisible(true);
@@ -521,6 +575,10 @@ public class NftController implements Initializable {
 				}
 			}
 		});
+
+		netSpeedGraph.getData().clear();
+		netSpeedGraph.getData().add(upSpeedSeries);
+		netSpeedGraph.getData().add(downSpeedSeries);
 
 		downloadsTree.setRoot(new TreeItem<>("root"));
 		horizDownloadTreeScrollBar = getScrollBarFromTreeView(downloadsTree, Orientation.HORIZONTAL);

@@ -183,6 +183,15 @@ public class FileTreeItem extends TreeItem {
 		((ProgressTreeCell)getValue()).updateProgress();
 	}
 
+	public LinkedList<FileTreeItem> getPathFromRoot() {
+		LinkedList<FileTreeItem> pathFromRoot = new LinkedList<>();
+		pathFromRoot.add((FileTreeItem)this.getParent());
+		while (!pathFromRoot.getFirst().isRoot()) {
+			pathFromRoot.addFirst((FileTreeItem)pathFromRoot.getFirst().getParent());
+		}
+		return pathFromRoot;
+	}
+
 	public void updateProgress() {
 		if (folder) {
 			double progress = 0;
@@ -198,15 +207,15 @@ public class FileTreeItem extends TreeItem {
 		}
 	}
 
-	public void updateProgress(LinkedList<String> childPath) {
+	public void updateProgress(LinkedList<FileTreeItem> childPath) {
 		if (folder) {
 			double progress = 0;
 			boolean foundChild = false;
 			FileTreeItem childItem;
+			childPath.removeFirst();
 			for (Object child : getChildren()) {
 				childItem = (FileTreeItem) child;
-				if (childPath.size() > 0 && !foundChild && childItem.getName().equals(childPath.getFirst())) {
-					childPath.removeFirst();
+				if (childPath.size() > 0 && !foundChild && childItem == childPath.getFirst()) {
 					childItem.updateProgress(childPath);
 					foundChild = true;
 				}
@@ -280,7 +289,7 @@ public class FileTreeItem extends TreeItem {
 		String rootPath;
 		if (pathComponentsList.size() > 0) {
 			pathComponentsList.removeLast();
-			rootPath = rootItem.getPath() + File.separatorChar + String.join(File.separator, pathComponentsList);
+			rootPath = rootItem.getPath() + String.join(File.separator, pathComponentsList);
 		}
 		else {
 			LinkedList rootPathList = new LinkedList<>(Arrays.asList(rootItem.getPath().split(Pattern.quote(File.separator))));
