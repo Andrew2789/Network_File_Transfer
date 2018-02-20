@@ -199,8 +199,8 @@ public class FileTreeItem extends TreeItem {
 	}
 
 	public void updateProgress(LinkedList<String> childPath) {
-		double progress = 0;
 		if (folder) {
+			double progress = 0;
 			boolean foundChild = false;
 			FileTreeItem childItem;
 			for (Object child : getChildren()) {
@@ -215,8 +215,8 @@ public class FileTreeItem extends TreeItem {
 			if (!foundChild && childPath.size() != 0) {
 				throw new IllegalStateException("Not all children were found");
 			}
+			setProgress(progress);
  		}
-		setProgress(progress);
 	}
 
 	/**
