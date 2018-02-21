@@ -2,18 +2,11 @@ package Logic;
 
 import GUI.ProgressTreeCell;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.regex.Pattern;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 
 /**
  * @author Andrew Davidson (a.n.d.9489@gmail.com)
@@ -43,7 +36,7 @@ public class FileTreeItem extends TreeItem {
 	 * @param size		The size of the file/folder
 	 */
 	public FileTreeItem(File file, long size) {
-		super(String.format("%s %s (%s)", file.isDirectory() ? folderSymbol : fileSymbol, file.getName(), generate3SFSizeString(size)));
+		super(String.format("%s %s - %s", file.isDirectory() ? folderSymbol : fileSymbol, generate3SFSizeString(size), file.getName()));
 		name = file.getName();
 		this.size = size;
 		folder = file.isDirectory();
@@ -86,7 +79,7 @@ public class FileTreeItem extends TreeItem {
 	 * @param id		The id of the sendable tree item
 	 */
 	public FileTreeItem(File file, long size, int id) {
-		super(String.format("%s %s (%s)", file.isDirectory() ? folderSymbol : fileSymbol, file.getName(), generate3SFSizeString(size)));
+		super(String.format("%s %s - %s", file.isDirectory() ? folderSymbol : fileSymbol, generate3SFSizeString(size), file.getName()));
 		name = file.getName();
 		this.size = size;
 		path = file.getAbsolutePath();
@@ -185,13 +178,18 @@ public class FileTreeItem extends TreeItem {
 
 	public LinkedList<FileTreeItem> getPathFromRoot() {
 		LinkedList<FileTreeItem> pathFromRoot = new LinkedList<>();
-		pathFromRoot.add((FileTreeItem)this.getParent());
+		try {
+			pathFromRoot.add((FileTreeItem) this.getParent());
+		} catch (ClassCastException e) {
+			return null;
+		}
 		while (!pathFromRoot.getFirst().isRoot()) {
-			pathFromRoot.addFirst((FileTreeItem)pathFromRoot.getFirst().getParent());
+			pathFromRoot.addFirst((FileTreeItem) pathFromRoot.getFirst().getParent());
 		}
 		return pathFromRoot;
 	}
 
+	/*
 	public void updateProgress() {
 		if (folder) {
 			double progress = 0;
@@ -205,7 +203,7 @@ public class FileTreeItem extends TreeItem {
 			}
 			setProgress(progress);
 		}
-	}
+	}*/
 
 	public void updateProgress(LinkedList<FileTreeItem> childPath) {
 		if (folder) {
@@ -219,7 +217,11 @@ public class FileTreeItem extends TreeItem {
 					childItem.updateProgress(childPath);
 					foundChild = true;
 				}
-				progress += ((double) childItem.getSize()) / size * childItem.getProgress();
+				if (size == 0) {
+					progress += ((double) 1) / getChildren().size();
+				} else {
+					progress += ((double) childItem.getSize()) / size * childItem.getProgress();
+				}
 			}
 			if (!foundChild && childPath.size() != 0) {
 				throw new IllegalStateException("Not all children were found");

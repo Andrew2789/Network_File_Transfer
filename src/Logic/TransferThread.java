@@ -1,23 +1,14 @@
 package Logic;
 
 import GUI.NftController;
-import java.awt.SystemTray;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
-import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.regex.Pattern;
-import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 
 public class TransferThread extends NetThread {
@@ -25,17 +16,17 @@ public class TransferThread extends NetThread {
 	private boolean active = false;
 	private boolean writing;
 
-	public TransferThread(String ipAddress, int port, NftController nftController) {
+	TransferThread(String ipAddress, int port, NftController nftController) {
 		super(ipAddress, port, nftController);
 		writing = true;
 	}
 
-	public TransferThread(int port, NftController nftController) {
+	TransferThread(int port, NftController nftController) {
 		super(port, nftController);
 		writing = true;
 	}
 
-	public TransferThread(TransferThread master, NftController nftController) {
+	TransferThread(TransferThread master, NftController nftController) {
 		super(master.getSocket(), master.getReadStream(), null, nftController);
 		writing = false;
 	}
@@ -108,7 +99,11 @@ public class TransferThread extends NetThread {
 		for (FileTreeItem file : toTransfer) {
 			System.out.println("Beginning upload of " + file.getName());
 			try {
-				if (!file.isFolder()) {
+				if (file.isFolder()) {
+					if (file.getChildren().size() == 0) {
+						updateProgress(1, file, toTransfer.getFirst());
+					}
+				} else {
 					fileInputStream = new FileInputStream(String.join(File.separator, file.getPath().split("/")) + File.separatorChar + file.getName());
 					totalRead = 0;
 					lastRefresh = System.currentTimeMillis();
@@ -127,7 +122,7 @@ public class TransferThread extends NetThread {
 
 						currentTime = System.currentTimeMillis();
 						if (currentTime - lastSpeedUpdate > progressBarRefreshTime*transferSpeedRefreshFreq) {
-							nftController.setUploadSpeed((long)(readSinceLastUpdate/(((double)(currentTime - lastSpeedUpdate))/1000)));
+							nftController.updateUploadSpeed((long)(readSinceLastUpdate/(((double)(currentTime - lastSpeedUpdate))/1000)));
 							readSinceLastUpdate = 0;
 							lastSpeedUpdate = currentTime;
 						}
@@ -146,8 +141,8 @@ public class TransferThread extends NetThread {
 			}
 		}
 		System.out.println("Upload complete");
-		nftController.setUploadSpeed(0);
-		toTransfer.getFirst().updateProgress();
+		nftController.uploadStopped();
+		//toTransfer.getFirst().updateProgress();
 	}
 
 	private void downloadNext(byte[] buffer) throws IOException {
@@ -176,7 +171,6 @@ public class TransferThread extends NetThread {
 		int read;
 		long totalRead, currentTime, lastRefresh;
 		long readSinceLastUpdate = 0, lastSpeedUpdate = System.currentTimeMillis();
-		LinkedList<String> pathList;
 		for (FileTreeItem file : toTransfer) {
 			System.out.println("Beginning download of " + file.getName());
 			try {
@@ -190,6 +184,9 @@ public class TransferThread extends NetThread {
 					System.out.println(newFolder.getAbsolutePath() + newFolder.exists());
 					if (!newFolder.mkdirs() && !newFolder.exists()) {
 						throw new SecurityException("Unable to make dir " + newFolder.getAbsolutePath());
+					}
+					if (file.getChildren().size() == 0) {
+						updateProgress(1, file, root);
 					}
 				} else {
 					fileOutputStream = new FileOutputStream(fullPath);
@@ -210,7 +207,7 @@ public class TransferThread extends NetThread {
 
 						currentTime = System.currentTimeMillis();
 						if (currentTime - lastSpeedUpdate > progressBarRefreshTime*transferSpeedRefreshFreq) {
-							nftController.setDownloadSpeed((long)(readSinceLastUpdate/((double)(currentTime - lastSpeedUpdate)/1000)));
+							nftController.updateDownloadSpeed((long)(readSinceLastUpdate/((double)(currentTime - lastSpeedUpdate)/1000)));
 							readSinceLastUpdate = 0;
 							lastSpeedUpdate = currentTime;
 						}
@@ -229,8 +226,8 @@ public class TransferThread extends NetThread {
 			}
 		}
 		System.out.println("Download complete");
-		nftController.setDownloadSpeed(0);
-		root.updateProgress();
+		nftController.downloadStopped();
+		//root.updateProgress();
 	}
 
 	@Override

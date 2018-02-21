@@ -1,17 +1,10 @@
 package Logic;
 
 import GUI.NftController;
-import GUI.ProgressTreeCell;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.Hashtable;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import javafx.collections.ObservableList;
-import javafx.scene.control.TreeItem;
 
 public class TransferControlThread extends NetThread {
 
@@ -19,11 +12,11 @@ public class TransferControlThread extends NetThread {
 	private int nextSendableId = 0, nextDownloadId = 0;
 	private LinkedList<Integer> removedSendables = new LinkedList<>();
 
-	public TransferControlThread(String ipAddress, int port, NftController nftController) {
+	TransferControlThread(String ipAddress, int port, NftController nftController) {
 		super(ipAddress, port, nftController);
 	}
 
-	public TransferControlThread(int port, NftController nftController) {
+	TransferControlThread(int port, NftController nftController) {
 		super(port, nftController);
 	}
 

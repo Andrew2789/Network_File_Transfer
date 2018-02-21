@@ -1,29 +1,22 @@
 package Logic;
 
 import GUI.NftController;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URISyntaxException;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-    private static TransferThread writeThread = null;
-    private static TransferThread readThread = null;
+    private static TransferThread writeThread = null, readThread = null;
     private static TransferControlThread transferControlThread = null;
     private static String location;
-    private static int nextSendableRootId = -1;
-    private static int nextDownloadRootId = -1;
+    private static int nextSendableRootId = -1, nextDownloadRootId = -1;
     private static Scene scene;
 
     public static String getLocation() {
@@ -113,17 +106,11 @@ public class Main extends Application {
     }
 
 	public static boolean writeThreadActive() {
-    	if (writeThread == null) {
-    		return false;
-		}
- 		return writeThread.isActive();
+ 		return writeThread != null && writeThread.isActive();
 	}
 
 	public static boolean readThreadActive() {
-		if (readThread == null) {
-			return false;
-		}
-		return readThread.isActive();
+		return readThread != null && readThread.isActive();
 	}
 
     @Override
@@ -135,11 +122,10 @@ public class Main extends Application {
         try {
 			location = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile().getAbsolutePath();
 			Parent root = FXMLLoader.load(getClass().getResource("/GUI/nft.fxml"));
-			Scene scene = new Scene(root, 1366, 768);
+			scene = new Scene(root, 1366, 768);
 			stage.setScene(scene);
 			stage.show();
 			scene.getStylesheets().add("/GUI/darkblue.css");
-			this.scene = scene;
 		} catch (IOException | URISyntaxException e) {
         	e.printStackTrace();
         	stop();

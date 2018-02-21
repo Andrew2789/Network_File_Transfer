@@ -1,7 +1,6 @@
 package Logic;
 
 import GUI.NftController;
-import java.awt.SystemTray;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -22,19 +21,19 @@ public abstract class NetThread extends Thread {
 	protected DataInputStream inputStream = null;
 	protected DataOutputStream outputStream = null;
 
-	public NetThread(String ipAddress, int port, NftController nftController) {
+	NetThread(String ipAddress, int port, NftController nftController) {
 		this.ipAddress = ipAddress;
 		this.port = port;
 		this.connectTimeout = 10000; //10 seconds
 		this.nftController = nftController;
 	}
 
-	public NetThread(int port, NftController nftController) {
+	NetThread(int port, NftController nftController) {
 		this.port = port;
 		this.nftController = nftController;
 	}
 
-	public NetThread(Socket socket, DataInputStream inputStream, DataOutputStream outputStream, NftController nftController) {
+	NetThread(Socket socket, DataInputStream inputStream, DataOutputStream outputStream, NftController nftController) {
 		this.socket = socket;
 		this.inputStream = inputStream;
 		this.outputStream = outputStream;
