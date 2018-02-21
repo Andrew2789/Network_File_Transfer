@@ -115,6 +115,14 @@
 }
 
 
+.split-pane {
+	-fx-background-color: transparent;
+}
+.split-pane .split-pane-divider {
+	-fx-background-color: transparent;
+}
+
+
 #upSpeedLabel {
 	-fx-text-fill: #bbffb7;
 }

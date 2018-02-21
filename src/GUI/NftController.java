@@ -100,7 +100,6 @@ public class NftController implements Initializable {
 	@FXML
 	private Button removeSendable;
 
-	private ScrollBar horizUploadTreeScrollBar, horizDownloadTreeScrollBar, horizSendableTreeScrollBar, horizReceivableTreeScrollBar;
 	private long uploadSpeedAvg = 0, downloadSpeedAvg = 0;
 	private int uploadSpeedSeriesUpdate = 0, downloadSpeedSeriesUpdate = 0;
 	private String uploadSymbol = "⬆", downloadSymbol = "⬇";
@@ -586,24 +585,8 @@ public class NftController implements Initializable {
 		netSpeedGraph.getData().add(downSpeedSeries);
 
 		downloadsTree.setRoot(new TreeItem<>("root"));
-		horizDownloadTreeScrollBar = getScrollBarFromTreeView(downloadsTree, Orientation.HORIZONTAL);
 		uploadsTree.setRoot(new TreeItem<>("root"));
-		horizUploadTreeScrollBar = getScrollBarFromTreeView(uploadsTree, Orientation.HORIZONTAL);
 		sendableTree.setRoot(new TreeItem<>("root"));
-		horizSendableTreeScrollBar = getScrollBarFromTreeView(sendableTree, Orientation.HORIZONTAL);
 		receivableTree.setRoot(new TreeItem<>("root"));
-		horizReceivableTreeScrollBar = getScrollBarFromTreeView(receivableTree, Orientation.HORIZONTAL);
-	}
-
-	private ScrollBar getScrollBarFromTreeView(TreeView treeView, Orientation orientation) {
-		Set<Node> nodes = treeView.lookupAll(".scroll-bar");
-		ScrollBar scrollBar;
-		for (Node node : nodes) {
-			scrollBar = (ScrollBar) node;
-			if (scrollBar.getOrientation() == orientation) {
-				return scrollBar;
-			}
-		}
-		return null;
 	}
 }
