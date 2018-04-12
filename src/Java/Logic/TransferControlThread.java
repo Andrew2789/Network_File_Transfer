@@ -1,16 +1,16 @@
-package Logic;
+package Java.Logic;
 
-import GUI.NftController;
+import Java.GUI.FileTreeItem;
+import Java.GUI.NftController;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.LinkedList;
 import javafx.collections.ObservableList;
 
 public class TransferControlThread extends NetThread {
-
 	private boolean sendablesAdded = true, sendablesRemoved = false, downloadsQueued = false, downloadsDequeued = false;
 	private int nextSendableId = 0, nextDownloadId = 0;
-	private LinkedList<Integer> removedSendables = new LinkedList<>();
+	private final LinkedList<Integer> removedSendables = new LinkedList<>();
 
 	TransferControlThread(String ipAddress, int port, NftController nftController) {
 		super(ipAddress, port, nftController);

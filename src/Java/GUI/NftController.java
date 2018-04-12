@@ -1,14 +1,11 @@
-package GUI;
+package Java.GUI;
 
-import Logic.FileTreeItem;
-import Logic.Main;
+import Java.Logic.Main;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Orientation;
-import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
@@ -16,37 +13,25 @@ import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
+
+import javax.swing.*;
 import java.io.File;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
-import java.util.Set;
-import javax.swing.JFileChooser;
 
 public class NftController implements Initializable {
 	//Session setup elements
 	@FXML
-	private Label sessionSetupTitle;
-	@FXML
-	private Label sessionInfoLabel;
+	private Label sessionSetupTitle, sessionInfoLabel, connectPrompt;
 	@FXML
 	private GridPane sessionSetupControls;
 	@FXML
-	private TextField nicknameInput;
-	@FXML
-	private TextField ipInput;
-	@FXML
-	private TextField port1Input;
-	@FXML
-	private TextField port2Input;
-	@FXML
-	private Label connectPrompt;
+	private TextField nicknameInput,  ipInput,  port1Input, port2Input;
 	@FXML
 	private CheckBox hosting;
 	@FXML
-	private Button connectButton;
-	@FXML
-	private Button listenButton;
+	private Button connectButton, listenButton;
 	@FXML
 	private CheckBox autoPort2;
 
@@ -54,9 +39,7 @@ public class NftController implements Initializable {
 	@FXML
 	private Label connectionStatus;
 	@FXML
-	private Button cancelButton;
-	@FXML
-	private Button disconnectButton;
+	private Button cancelButton, disconnectButton;
 
 	//Preferences elements
 	@FXML
@@ -64,41 +47,19 @@ public class NftController implements Initializable {
 	@FXML
 	private TextField downloadPathInput;
 	@FXML
-	private CheckBox relativeDownloadPath;
-	@FXML
-	private CheckBox rememberFolders;
-	@FXML
-	private CheckBox fileNameEncryption;
-	@FXML
-	private CheckBox darkTheme;
+	private CheckBox relativeDownloadPath, rememberFolders, fileNameEncryption, darkTheme;
 
 	//Network speed elements
 	@FXML
 	private LineChart netSpeedGraph;
 	@FXML
-	private Label upSpeedLabel;
-	@FXML
-	private Label downSpeedLabel;
+	private Label upSpeedLabel, downSpeedLabel;
 
 	//Main tree displays
 	@FXML
-	private TreeView uploadsTree;
+	private TreeView uploadsTree, downloadsTree, sendableTree, receivableTree;
 	@FXML
-	private TreeView downloadsTree;
-	@FXML
-	private TreeView sendableTree;
-	@FXML
-	private TreeView receivableTree;
-	@FXML
-	private Button queueDownload;
-	@FXML
-	private Button dequeueDownload;
-	@FXML
-	private Button clearCompleted;
-	@FXML
-	private Button addSendable;
-	@FXML
-	private Button removeSendable;
+	private Button queueDownload, dequeueDownload, clearCompleted, addSendable, removeSendable;
 
 	private long uploadSpeedAvg = 0, downloadSpeedAvg = 0;
 	private int uploadSpeedSeriesUpdate = 0, downloadSpeedSeriesUpdate = 0;
@@ -144,8 +105,8 @@ public class NftController implements Initializable {
 			if (upSpeedSeries.getData().size() > maxGraphDataPoints) {
 				upSpeedSeries.getData().remove(0);
 			}
-			for (XYChart.Data data : upSpeedSeries.getData()) {
-				data.setXValue((int) data.getXValue() + 1);
+			for (XYChart.Data<Integer, Double> data : upSpeedSeries.getData()) {
+				data.setXValue(data.getXValue() + 1);
 			}
 			upSpeedSeries.getData().add(new XYChart.Data<>(0, (double) 0));
 		}
@@ -157,8 +118,8 @@ public class NftController implements Initializable {
 			if (downSpeedSeries.getData().size() > maxGraphDataPoints) {
 				downSpeedSeries.getData().remove(0);
 			}
-			for (XYChart.Data data : downSpeedSeries.getData()) {
-				data.setXValue((int) data.getXValue() + 1);
+			for (XYChart.Data<Integer, Double> data : downSpeedSeries.getData()) {
+				data.setXValue(data.getXValue() + 1);
 			}
 			downSpeedSeries.getData().add(new XYChart.Data<>(0, (double)0));
 		}
@@ -172,15 +133,15 @@ public class NftController implements Initializable {
 				if (upSpeedSeries.getData().size() > maxGraphDataPoints) {
 					upSpeedSeries.getData().remove(0);
 				}
-				for (XYChart.Data data : upSpeedSeries.getData()) {
-					data.setXValue((int) data.getXValue() + 1);
+				for (XYChart.Data<Integer, Double> data : upSpeedSeries.getData()) {
+					data.setXValue(data.getXValue() + 1);
 				}
 				if (Main.readThreadActive()) {
 					if (downSpeedSeries.getData().size() == maxGraphDataPoints) {
 						downSpeedSeries.getData().remove(0);
 					}
-					for (XYChart.Data data : downSpeedSeries.getData()) {
-						data.setXValue((int) data.getXValue() + 1);
+					for (XYChart.Data<Integer, Double> data : downSpeedSeries.getData()) {
+						data.setXValue(data.getXValue() + 1);
 					}
 					downSpeedSeries.getData().add(new XYChart.Data<>(0, ((double)downloadSpeedAvg)/1000000));
 				}
@@ -200,8 +161,8 @@ public class NftController implements Initializable {
 					if (downSpeedSeries.getData().size() == maxGraphDataPoints) {
 						downSpeedSeries.getData().remove(0);
 					}
-					for (XYChart.Data data : downSpeedSeries.getData()) {
-						data.setXValue((int) data.getXValue() + 1);
+					for (XYChart.Data<Integer, Double> data : downSpeedSeries.getData()) {
+						data.setXValue(data.getXValue() + 1);
 					}
 					downSpeedSeries.getData().add(new XYChart.Data<>(0, ((double)downloadSpeedAvg)/1000000));
 				}
@@ -255,9 +216,7 @@ public class NftController implements Initializable {
 	}
 
 	public void setPeerNickname(String peerNickname) {
-		Platform.runLater(() -> {
-			sessionInfoLabel.setText(String.format("You (%s) are connected to %s (%s) on ports %s and %s", nicknameInput.getText(), ipInput.getText(), peerNickname, port1Input.getText(), port2Input.getText()));
-		});
+		Platform.runLater(() -> sessionInfoLabel.setText(String.format("You (%s) are connected to %s (%s) on ports %s and %s", nicknameInput.getText(), ipInput.getText(), peerNickname, port1Input.getText(), port2Input.getText())));
 	}
 
 	public void listenClicked() {
@@ -346,9 +305,9 @@ public class NftController implements Initializable {
 
 	public void themeChanged() {
 		if (darkTheme.isSelected()) {
-			Main.setStyleSheet("/GUI/darkblue.css");
+			Main.setStyleSheet("/Resources/CSS/darkblue.css");
 		} else {
-			Main.setStyleSheet("/GUI/lightblue.css");
+			Main.setStyleSheet("/Resources/CSS/lightblue.css");
 		}
 	}
 

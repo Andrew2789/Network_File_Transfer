@@ -1,7 +1,5 @@
-package GUI;
+package Java.GUI;
 
-import Logic.FileTreeItem;
-import java.io.File;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;

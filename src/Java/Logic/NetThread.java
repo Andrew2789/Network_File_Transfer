@@ -1,6 +1,6 @@
-package Logic;
+package Java.Logic;
 
-import GUI.NftController;
+import Java.GUI.NftController;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,14 +10,11 @@ public abstract class NetThread extends Thread {
 	private Thread t;
 	private ServerSocket serverSocket = null;
 	protected Socket socket = null;
-	protected static final int checkTimeout = 100;
-	protected static final int commTimeout = 10000;
-	protected static final int chunkSize = 65536;
-	protected boolean exit = false;
+	protected static final int checkTimeout = 100, commTimeout = 10000, chunkSize = 65536;
+	protected boolean exit = false, ownsSocket = true;;
 	protected String ipAddress = null;
 	protected int port, connectTimeout;
 	protected NftController nftController;
-	protected boolean ownsSocket = true;
 	protected DataInputStream inputStream = null;
 	protected DataOutputStream outputStream = null;
 

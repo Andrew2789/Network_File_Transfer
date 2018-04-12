@@ -1,6 +1,5 @@
-package Logic;
+package Java.GUI;
 
-import GUI.ProgressTreeCell;
 import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedList;

@@ -1,6 +1,7 @@
-package Logic;
+package Java.Logic;
 
-import GUI.NftController;
+import Java.GUI.FileTreeItem;
+import Java.GUI.NftController;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
