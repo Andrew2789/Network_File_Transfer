@@ -1,7 +1,7 @@
 # Network_File_Transfer  
 A Java/JavaFX application that allows for direct network transfer of files and folders.  
 
-This project is a work in progress - it is currently capable of sending folders to another instance of itself but the transferred files are not checked for integrity, and the protocol has no failsafes so it crashes occassionally.
+This project is a work in progress - it is currently capable of sending folders to another instance of itself but the transferred files are not checked for integrity, and the protocol has no failsafes so it crashes occassionally.  
 Network_File_Transfer.jar is the compiled project, and requires Java 9 to run.
 
 Next steps:  
