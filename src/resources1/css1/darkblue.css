@@ -1,0 +1,153 @@
+@font-face {
+	font-family: "Source Sans Pro";
+	src: url("../font/SourceSansPro-Regular.ttf");
+}
+
+.root {
+	-fx-background-color: #1d3549;
+}
+
+.scroll-pane,
+.scroll-pane .viewport,
+.scroll-pane .scroll-bar {
+	-fx-background-color: transparent;
+}
+.scroll-pane .scroll-bar .thumb {
+	-fx-background-color: #396a93;
+}
+
+
+/*Roughly based off the record-sales button from http://fxexperience.com/2011/12/styling-fx-buttons-with-css/*/
+.button {
+	-fx-text-fill: white;
+	-fx-padding: 4 8 11 8;
+	-fx-background-insets: 0,0 0 5 0, 0 0 6 0, 0 0 7 0;
+	-fx-background-radius: 8;
+	-fx-background-color: #2b506e, #457fb0, #4f89ba, #4785b8;
+}
+.button:hover {
+	-fx-background-color: #2e5576, #4785b8, #568ebd, #4f89ba;
+}
+.button:pressed {
+	-fx-background-color: #4785b8;
+	-fx-padding: 7 8 7 8;
+	-fx-background-insets: 2 0 0 0, 2 0 3 0, 2 0 4 0, 2 0 5 0;
+}
+
+
+.text-field,
+.text-field:hover {
+	-fx-background-color: #2b506e;
+	-fx-text-fill: #edf3f8;
+	-fx-font-family: "Source Sans Pro";
+	-fx-prompt-text-fill: #b6cee2;
+}
+.text-field:focused {
+	-fx-background-color: #325d81;
+	-fx-font-family: "Source Sans Pro";
+}
+
+TextFlow {
+	-fx-background-color: #2b506e;
+}
+
+
+.check-box .text {
+	-fx-fill: #edf3f8;
+	-fx-font-family: "Source Sans Pro";
+}
+.check-box .box {
+	-fx-background-color: #4077a5;
+	-fx-font-family: "Source Sans Pro";
+}
+.check-box:selected .mark {
+	-fx-background-color: white;
+}
+
+
+.separator {
+	-fx-background-color: transparent;
+}
+.separator .line {
+	-fx-border-width: 1px;
+	-fx-border-color: #4077a5;
+	-fx-background-color: transparent;
+}
+
+
+.label {
+	-fx-text-fill: #dae7f1;
+	-fx-font-family: "Source Sans Pro";
+}
+
+
+.tree-view,
+.tree-view:focused {
+	-fx-font-size: 14px;
+	-fx-focus-color: transparent;
+	-fx-faint-focus-color: transparent;
+	-fx-background-color: #396a93;
+	-fx-box-border: hidden;
+	-fx-background-radius: 0px;
+	-fx-background-insets: 0px;
+}
+.tree-view .tree-cell {
+	-fx-background-color: #396a93;
+	-fx-text-fill: #edf3f8;
+}
+.tree-view .tree-cell:selected {
+	-fx-background-color: #4785b8;
+}
+.tree-view .virtual-flow .corner,
+.tree-view .virtual-flow .scroll-bar {
+	-fx-background-color: #396a93;
+}
+.tree-view .virtual-flow .scroll-bar .thumb {
+	-fx-background-color: #6c9dc6;
+}
+
+
+.chart .axis:left {
+	-fx-tick-length: 10px;
+	-fx-tick-label-gap:4px;
+	-fx-tick-label-fill: #edf3f8;
+	-fx-tick-label-font-size: 12px;
+}
+.chart .chart-content .chart-plot-background {
+	-fx-background-color: #2b506e;
+}
+.chart .chart-content .chart-horizontal-grid-lines {
+	-fx-stroke: #6c9dc6;
+}
+.default-color0.chart-series-line {
+	-fx-stroke: #bbffb7;
+	-fx-stroke-width: 2px;
+}
+.default-color1.chart-series-line {
+	-fx-stroke: #c1b7ff;
+	-fx-stroke-width: 2px;
+}
+
+
+.split-pane {
+	-fx-background-color: transparent;
+}
+.split-pane .split-pane-divider {
+	-fx-background-color: transparent;
+}
+
+
+#upSpeedLabel {
+	-fx-text-fill: #bbffb7;
+}
+#downSpeedLabel {
+	-fx-text-fill: #c1b7ff;
+}
+
+
+.progress-bar .track {
+	-fx-background-color: transparent;
+}
+.progress-bar .bar {
+	-fx-background-color: #1d3549;
+}
