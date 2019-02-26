@@ -12,8 +12,8 @@ import javafx.collections.ObservableList;
 
 public class TransferControlThread extends SocketThread {
 	private boolean sendablesAdded = true, sendablesRemoved = false;
-	private int nextSendableId = 0, nextDownloadId = 0;
-	private final LinkedList<Integer> removedSendables = new LinkedList<>();
+	private int nextSendableId = 0;
+    private final LinkedList<Integer> removedSendables = new LinkedList<>();
 	private BodyController bodyController;
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
@@ -102,7 +102,7 @@ public class TransferControlThread extends SocketThread {
 			recvSubfolders(newReceivable, children);
 		}
 		synchronized (bodyController.getDownloads()) {
-			bodyController.getDownloads().add(newReceivable);
+			bodyController.getDownloads().add(newReceivable.receivableToDownload(id));
 			System.out.println("Finished receiving " + newReceivable.getName());
 		}
         readThread.startTransfer();

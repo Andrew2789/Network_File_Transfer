@@ -29,15 +29,25 @@ public class FileTreeItem extends TreeItem {
 	private String path = null;
 	private double progress;
 
+
+/*	public FileTreeItem(File file, long size) {
+		super(String.format("%s %s - %s", file.isDirectory() ? folderSymbol : fileSymbol, generate3SFSizeString(size), file.getName()));
+		name = file.getName();
+		this.size = size;
+		folder = file.isDirectory();
+	}*/
+
 	/**
 	 * Constructor for a sendable tree item from a File object
 	 * @param file 		The file/folder to construct a sendable tree item from
 	 * @param size		The size of the file/folder
 	 */
 	public FileTreeItem(File file, long size) {
-		super(String.format("%s %s - %s", file.isDirectory() ? folderSymbol : fileSymbol, generate3SFSizeString(size), file.getName()));
+		super();
+		setValue(new ProgressTreeCell(String.format("%s %s - %s", file.isDirectory() ? folderSymbol : fileSymbol, generate3SFSizeString(size), file.getName()), this));
 		name = file.getName();
 		this.size = size;
+		path = file.getAbsolutePath();
 		folder = file.isDirectory();
 	}
 
