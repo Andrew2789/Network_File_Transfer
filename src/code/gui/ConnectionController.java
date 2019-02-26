@@ -1,6 +1,7 @@
 package code.gui;
 
 import code.network.Main;
+import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -20,11 +21,27 @@ public class ConnectionController implements Initializable {
 
     private static final int PORT_MIN = 1024;
 
+    public void addLogMessage(String message) {
+        Platform.runLater(() -> {
+            if (log.getText().isEmpty()) {
+                log.setText(message);
+            } else {
+                log.setText(log.getText() + "\n" + message);
+            }
+        });
+    }
+
     public void connectClicked() {
         String ipAddress = ipInput.getCharacters().toString();
         int port = Integer.parseInt(clientPortInput.getCharacters().toString());
 
-        Main.clientTransferThreads(ipAddress, port, () -> System.out.println("fail"), () -> System.out.println("success"), () -> System.out.println("disco"));
+        Main.clientTransferThreads(ipAddress, port,
+                () -> addLogMessage("Failed to connect."),
+                () -> {
+                    addLogMessage("Successfully connected.");
+                    Main.connected();
+                },
+                () -> addLogMessage("Disconnected."));
         /*if (Main.clientTransferThreads(nameInput.getCharacters().toString(), ipAddress, port)) {
             Main.showGame();
         } else {
@@ -36,7 +53,14 @@ public class ConnectionController implements Initializable {
     public void hostClicked() {
         int port = Integer.parseInt(hostPortInput.getCharacters().toString());
 
-        Main.hostTransferThreads(port, () -> System.out.println("fail"), () -> System.out.println("success"), () -> System.out.println("serv created"), () -> System.out.println("disco"));
+        Main.hostTransferThreads(port,
+                () -> addLogMessage("Failed to connect."),
+                () -> {
+                    addLogMessage("Successfully connected.");
+                    Main.connected();
+                },
+                () -> addLogMessage("Server created, listening..."),
+                () -> addLogMessage("Disconnected."));
         /*if (!Main.createServer(port)) {
             errorLabel.setText("Error: Failed to host");
             errorLabel.setVisible(true);

@@ -30,10 +30,6 @@ public class TransferThread extends SocketThread {
 		return active;
 	}
 
-	private ClientSocket getSocket() {
-		return clientSockets.get(0);
-	}
-
 	public void startTransfer() {
 		active = true;
 	}

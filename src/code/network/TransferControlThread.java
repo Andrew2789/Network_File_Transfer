@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import javafx.collections.ObservableList;
 
 public class TransferControlThread extends SocketThread {
-	private boolean sendablesAdded = true, sendablesRemoved = false, downloadsQueued = false, downloadsDequeued = false;
+	private boolean sendablesAdded = true, sendablesRemoved = false;
 	private int nextSendableId = 0, nextDownloadId = 0;
 	private final LinkedList<Integer> removedSendables = new LinkedList<>();
 	private BodyController bodyController;
@@ -30,13 +30,21 @@ public class TransferControlThread extends SocketThread {
         this.bodyController = bodyController;
 	}
 
-	private void sendNewSendables() throws IOException {
-		if (bodyController.getSendables().size() == 0)
+	public boolean writeThreadActive() {
+		return writeThread != null && writeThread.isActive();
+	}
+
+	public boolean readThreadActive() {
+		return readThread != null && readThread.isActive();
+	}
+
+	private void sendUploadNames() throws IOException {
+		if (bodyController.getUploads().size() == 0)
 			return;
 
 		int treeIndex = 0;
-		synchronized (bodyController.getSendables()) {
-			ObservableList sendables = bodyController.getSendables();
+		synchronized (bodyController.getUploads()) {
+			ObservableList sendables = bodyController.getUploads();
 			int sendableLength = sendables.size();
 			while (((FileTreeItem) sendables.get(treeIndex)).getId() < nextSendableId && treeIndex < sendableLength) {
 				treeIndex++;
@@ -61,6 +69,7 @@ public class TransferControlThread extends SocketThread {
 			nextSendableId = ((FileTreeItem) sendables.get(treeIndex-1)).getId() + 1;
 		}
 		sendablesAdded = false;
+        writeThread.startTransfer();
 	}
 
 	private void sendSubfolders(FileTreeItem parent) throws IOException {
@@ -80,7 +89,7 @@ public class TransferControlThread extends SocketThread {
 		}
 	}
 
-	private void recvNewSendables() throws IOException {
+	private void recvDownloadNames() throws IOException {
 		//root node info
 		int id = inputStream.readInt();
 		boolean folder = inputStream.readBoolean();
@@ -92,10 +101,11 @@ public class TransferControlThread extends SocketThread {
 			int children = inputStream.readInt();
 			recvSubfolders(newReceivable, children);
 		}
-		synchronized (bodyController.getReceivables()) {
-			bodyController.getReceivables().add(newReceivable);
+		synchronized (bodyController.getDownloads()) {
+			bodyController.getDownloads().add(newReceivable);
 			System.out.println("Finished receiving " + newReceivable.getName());
 		}
+        readThread.startTransfer();
 	}
 
 	private void recvSubfolders(FileTreeItem parent, int fileCount) throws IOException {
@@ -120,7 +130,7 @@ public class TransferControlThread extends SocketThread {
 		}
 	}
 
-	private void sendRemovedSendables() throws IOException {
+	private void sendRemovedUploads() throws IOException {
 		synchronized (removedSendables) {
 			for (int id: removedSendables) {
 				outputStream.writeInt(2); //opcode
@@ -129,60 +139,18 @@ public class TransferControlThread extends SocketThread {
 		}
 	}
 
-	private void recvRemovedSendables() throws IOException {
+	private void recvRemovedDownloads() throws IOException {
 		FileTreeItem childItem;
 		int id = inputStream.readInt();
-		synchronized (bodyController.getReceivables()) {
-			for (Object child: bodyController.getReceivables()) {
+		synchronized (bodyController.getDownloads()) {
+			for (Object child: bodyController.getDownloads()) {
 				childItem = (FileTreeItem)child;
 				if (childItem.getId() == id) {
-					bodyController.getReceivables().remove(childItem);
+					bodyController.getDownloads().remove(childItem);
 					break;
 				}
 			}
 		}
-	}
-
-	private void sendQueuedDownloads() throws IOException {
-		int treeIndex = 0;
-		synchronized (bodyController.getDownloads()) {
-			ObservableList downloads = bodyController.getDownloads();
-			int downloadsLength = downloads.size();
-			while (((FileTreeItem) downloads.get(treeIndex)).getId() < nextDownloadId && treeIndex < downloadsLength) {
-				treeIndex++;
-			}
-			FileTreeItem rootTreeItem;
-			while (treeIndex < downloadsLength) {
-				rootTreeItem = (FileTreeItem) downloads.get(treeIndex);
-				outputStream.writeInt(3); //opcode
-				outputStream.writeInt(rootTreeItem.getId());
-				outputStream.writeUTF(rootTreeItem.getPath());
-				treeIndex++;
-				System.out.println("Finished sending " + rootTreeItem.getName());
-			}
-			nextDownloadId = ((FileTreeItem) downloads.get(treeIndex-1)).getId() + 1;
-		}
-		downloadsQueued = false;
-		readThread.startTransfer();
-	}
-
-	private void recvQueuedDownloads() throws IOException {
-		int id = inputStream.readInt();
-		String path = inputStream.readUTF();
-		FileTreeItem newUpload = FileTreeItem.idPathToUpload(path, id, bodyController.getSendables());
-		synchronized (bodyController.getUploads()) {
-			bodyController.getUploads().add(newUpload);
-			System.out.println("Finished receiving " + newUpload.getName());
-		}
-		writeThread.startTransfer();
-	}
-
-	private void sendDequeuedDownloads() throws IOException {
-
-	}
-
-	private void recvDequeuedDownloads() throws IOException {
-
 	}
 
 	@Override
@@ -199,44 +167,25 @@ public class TransferControlThread extends SocketThread {
 
 		int opCode;
 		while (!exit) {
-			/*Main loop, check if sendables or download queue changed and notify other.
-			1: new sendable
-			2: removed sendable
-			3: new download queued
-			4: removed download from queue
-			5: echo
-			*/
 			if (sendablesAdded) {
-				sendNewSendables();
+				sendUploadNames();
 			}
 			if (sendablesRemoved) {
-				sendRemovedSendables();
-			}
-			if (downloadsQueued) {
-				sendQueuedDownloads();
-			}
-			if (downloadsDequeued) {
-				sendDequeuedDownloads();
+				sendRemovedUploads();
 			}
 			try {
 				opCode = inputStream.readInt();
 				clientSockets.get(0).socket.setSoTimeout(communicationTimeout);
 				try {
 					switch (opCode) {
-						case 1:
-							recvNewSendables();
+				 		case 1:
+							recvDownloadNames();
 							break;
 						case 2:
-							recvRemovedSendables();
+							recvRemovedDownloads();
 							break;
 						case 3:
-							recvQueuedDownloads();
-							break;
-						case 4:
-							recvDequeuedDownloads();
-							break;
-						case 5:
-							outputStream.writeInt(5);
+							outputStream.writeInt(3);
 							break;
 						default:
 							throw new IllegalStateException("Invalid opcode received: " + opCode);
@@ -260,14 +209,6 @@ public class TransferControlThread extends SocketThread {
 		synchronized (removedSendables) {
 			removedSendables.add(id);
 		}
-	}
-
-	void downloadQueued() {
-		downloadsQueued = true;
-	}
-
-	void downloadDequeued() {
-		downloadsDequeued = true;
 	}
 
 	@Override

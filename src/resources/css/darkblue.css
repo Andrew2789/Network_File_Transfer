@@ -36,7 +36,9 @@
 
 
 .text-field,
-.text-field:hover {
+.text-area,
+.text-field:hover,
+.text-area:hover {
 	-fx-background-color: #2b506e;
 	-fx-text-fill: #edf3f8;
 	-fx-font-family: "Source Sans Pro";
@@ -46,9 +48,10 @@
 	-fx-background-color: #325d81;
 	-fx-font-family: "Source Sans Pro";
 }
-
-TextFlow {
-	-fx-background-color: #2b506e;
+.text-area {
+	-fx-control-inner-background: #2b506e;
+	-fx-focus-color: transparent;
+	-fx-faint-focus-color: transparent;
 }
 
 

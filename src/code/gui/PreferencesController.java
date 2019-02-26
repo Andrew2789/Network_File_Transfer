@@ -1,17 +1,16 @@
 package code.gui;
 
+import code.network.Main;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
+import javafx.stage.DirectoryChooser;
 
 import javax.swing.*;
+import java.io.File;
 
 public class PreferencesController {
-    @FXML
-    private CheckBox showLogs;
-    @FXML
-    private Button chooseDownloadPath;
     @FXML
     private TextField downloadPathInput;
 
@@ -20,12 +19,11 @@ public class PreferencesController {
     }
 
     public void chooseNewDownloadPath() {
-        JFileChooser chooser = new JFileChooser(".");
-        chooser.setMultiSelectionEnabled(false);
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        int ret = chooser.showOpenDialog(null);
-        if (ret == JFileChooser.APPROVE_OPTION) {
-            downloadPathInput.setText(chooser.getSelectedFile().getAbsolutePath());
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Select Folder");
+        File selected = chooser.showDialog(Main.getStage());
+        if (selected != null) {
+            downloadPathInput.setText(selected.getAbsolutePath());
         }
     }
 }
