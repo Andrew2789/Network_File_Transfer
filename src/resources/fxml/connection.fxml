@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Font?>
+
+
+<BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="430.0" minWidth="480.0" prefHeight="720.0" prefWidth="1280.0" style="-fx-background-color: #142533;" stylesheets="@../css/darkblue.css" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.ConnectionController">
+   <center>
+      <AnchorPane maxHeight="430.0" maxWidth="600.0" minHeight="430.0" minWidth="600.0" style="-fx-background-color: #1d3549; -fx-background-radius: 15px;">
+         <children>
+            <GridPane fx:id="mainPane" maxHeight="250.0" maxWidth="570.0" minHeight="400.0" minWidth="570.0" prefHeight="250.0" prefWidth="570.0" AnchorPane.bottomAnchor="15.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="15.0">
+            			<columnConstraints>
+            				<ColumnConstraints hgrow="SOMETIMES" maxWidth="0.0" minWidth="0.0" percentWidth="74.0" prefWidth="0.0" />
+                  <ColumnConstraints minWidth="10.0" percentWidth="5.0" prefWidth="100.0" />
+                    <ColumnConstraints percentWidth="22.0" />
+            			</columnConstraints>
+            			<rowConstraints>
+            				<RowConstraints maxHeight="0.0" minHeight="0.0" percentHeight="9.0" prefHeight="0.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="0.0" minHeight="10.0" percentHeight="12.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="0.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            				<RowConstraints maxHeight="0.0" minHeight="0.0" percentHeight="7.0" prefHeight="0.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="0.0" minHeight="0.0" percentHeight="12.0" prefHeight="0.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="0.0" minHeight="10.0" percentHeight="12.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="SOMETIMES" />
+            			</rowConstraints>
+            			<children>
+            				<Label alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" text="Connect to" textAlignment="CENTER" GridPane.rowIndex="3">
+            					<font>
+            						<Font size="16.0" />
+            					</font>
+            					<GridPane.margin>
+            						<Insets />
+            					</GridPane.margin>
+            				</Label>
+            				<Button fx:id="connectButton" disable="true" mnemonicParsing="false" onAction="#connectClicked" style="-fx-font-size: 16;" text="Connect" GridPane.halignment="CENTER" GridPane.rowIndex="5">
+            					<GridPane.margin>
+            						<Insets />
+            					</GridPane.margin>
+            					<font>
+            						<Font size="14.0" />
+            					</font>
+            				</Button>
+            				<Label alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Session Setup" textAlignment="CENTER" GridPane.columnSpan="3">
+            					<font>
+            						<Font name="System Bold" size="20.0" />
+            					</font>
+            				</Label>
+                  <Label alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" text="OR Host on port" textAlignment="CENTER" GridPane.columnIndex="2" GridPane.rowIndex="3">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                     <GridPane.margin>
+                        <Insets />
+                     </GridPane.margin>
+                  </Label>
+                  <Button fx:id="hostButton" disable="true" mnemonicParsing="false" onAction="#hostClicked" style="-fx-font-size: 16;" text="Host" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="5">
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                     <GridPane.margin>
+                        <Insets />
+                     </GridPane.margin>
+                  </Button>
+                  <GridPane GridPane.columnSpan="3" GridPane.rowIndex="1">
+                    <columnConstraints>
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" prefWidth="100.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <Label alignment="CENTER_RIGHT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" text="Name" textAlignment="CENTER">
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets right="7.0" />
+                           </GridPane.margin>
+                        </Label>
+                        <TextField fx:id="nameInput" alignment="CENTER" promptText="eg. Scrub1" style="-fx-font-size: 16;" GridPane.columnIndex="1">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets right="60.0" />
+                           </GridPane.margin>
+                        </TextField>
+                     </children>
+                  </GridPane>
+                  <Separator orientation="VERTICAL" prefHeight="200.0" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="3" GridPane.rowSpan="3">
+                     <GridPane.margin>
+                        <Insets bottom="10.0" right="7.0" top="15.0" />
+                     </GridPane.margin>
+                  </Separator>
+                  <GridPane minHeight="0.0" minWidth="0.0" GridPane.rowIndex="4">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="5.0" prefWidth="100.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="5.0" minWidth="5.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="65.0" minWidth="65.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="5.0" minWidth="5.0" prefWidth="5.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                  				<TextField fx:id="ipInput" alignment="CENTER" promptText="IPv4 or IPv6 Address" style="-fx-font-size: 16;" text="127.0.0.1" GridPane.columnIndex="1">
+                  					<font>
+                  						<Font size="14.0" />
+                  					</font>
+                           <GridPane.margin>
+                              <Insets />
+                           </GridPane.margin>
+                  				</TextField>
+                  				<TextField fx:id="clientPortInput" alignment="CENTER" promptText="Port 1" style="-fx-font-size: 16;" text="51692" GridPane.columnIndex="3">
+                  					<font>
+                  						<Font size="14.0" />
+                  					</font>
+                           <GridPane.margin>
+                              <Insets />
+                           </GridPane.margin>
+                  				</TextField>
+                     </children>
+                  </GridPane>
+                  <GridPane minWidth="0.0" GridPane.columnIndex="2" GridPane.rowIndex="4">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="5.0" minWidth="5.0" prefWidth="5.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" prefWidth="100.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="65.0" minWidth="65.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <TextField fx:id="hostPortInput" alignment="CENTER" maxWidth="1.7976931348623157E308" promptText="Port 1" style="-fx-font-size: 16;" text="51692" GridPane.columnIndex="2" GridPane.halignment="CENTER">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </TextField>
+                     </children>
+                  </GridPane>
+                  <TextArea prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="3" GridPane.rowIndex="6">
+                     <GridPane.margin>
+                        <Insets top="10.0" />
+                     </GridPane.margin>
+                  </TextArea>
+            			</children>
+            		</GridPane>
+         </children>
+      </AnchorPane>
+   </center>
+</BorderPane>

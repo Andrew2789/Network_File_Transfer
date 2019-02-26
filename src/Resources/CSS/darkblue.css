@@ -1,7 +1,11 @@
-#backPane {
-	-fx-background-color: #1d3549;
+@font-face {
+	font-family: "Source Sans Pro";
+	src: url("../font/SourceSansPro-Regular.ttf");
 }
 
+.root {
+	-fx-background-color: #1d3549;
+}
 
 .scroll-pane,
 .scroll-pane .viewport,
@@ -31,21 +35,30 @@
 }
 
 
-.text-field {
+.text-field,
+.text-field:hover {
 	-fx-background-color: #2b506e;
 	-fx-text-fill: #edf3f8;
+	-fx-font-family: "Source Sans Pro";
 	-fx-prompt-text-fill: #b6cee2;
 }
 .text-field:focused {
 	-fx-background-color: #325d81;
+	-fx-font-family: "Source Sans Pro";
+}
+
+TextFlow {
+	-fx-background-color: #2b506e;
 }
 
 
 .check-box .text {
 	-fx-fill: #edf3f8;
+	-fx-font-family: "Source Sans Pro";
 }
 .check-box .box {
 	-fx-background-color: #4077a5;
+	-fx-font-family: "Source Sans Pro";
 }
 .check-box:selected .mark {
 	-fx-background-color: white;
@@ -64,6 +77,7 @@
 
 .label {
 	-fx-text-fill: #dae7f1;
+	-fx-font-family: "Source Sans Pro";
 }
 
 
