@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TreeView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<SplitPane dividerPositions="0.5" prefHeight="400.0" prefWidth="1000.0" stylesheets="@../css/darkblue.css" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.TransferController">
+    <items>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
+            <children>
+                <TreeView fx:id="uploadsTree" prefHeight="200.0" prefWidth="200.0" showRoot="false" AnchorPane.bottomAnchor="41.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="35.0" />
+                <Button fx:id="pauseUpload" disable="true" maxHeight="40.0" maxWidth="45.0" minHeight="40.0" minWidth="45.0" mnemonicParsing="false" onAction="#pauseUpload" prefHeight="40.0" prefWidth="45.0" text="⏸" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+                    <font>
+                        <Font name="System Bold" size="18.0" />
+                    </font>
+                    <opaqueInsets>
+                        <Insets />
+                    </opaqueInsets>
+                    <padding>
+                        <Insets bottom="2.0" />
+                    </padding>
+                </Button>
+                <Button fx:id="clearCompletedUploads" disable="true" maxHeight="40.0" maxWidth="45.0" minHeight="40.0" minWidth="45.0" mnemonicParsing="false" onAction="#clearCompletedUploads" prefHeight="40.0" prefWidth="45.0" text="✔" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="92.0">
+                    <font>
+                        <Font name="System Bold" size="16.0" />
+                    </font>
+                </Button>
+                <Label alignment="BOTTOM_CENTER" layoutX="99.0" layoutY="11.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Uploads" textAlignment="CENTER" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <font>
+                        <Font size="20.0" />
+                    </font>
+                </Label>
+                <Button fx:id="uploadFolder" layoutX="188.0" layoutY="514.0" maxHeight="40.0" maxWidth="45.0" minHeight="40.0" minWidth="45.0" mnemonicParsing="false" onAction="#uploadFolder" prefHeight="40.0" prefWidth="45.0" text="📁" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="138.0">
+                    <font>
+                        <Font name="System Bold" size="16.0" />
+                    </font>
+                </Button>
+                <Button fx:id="removeUpload" disable="true" layoutX="129.0" layoutY="509.0" maxHeight="40.0" maxWidth="45.0" minHeight="40.0" minWidth="45.0" mnemonicParsing="false" onAction="#removeUpload" prefHeight="40.0" prefWidth="45.0" text="✖" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="46.0">
+                    <font>
+                        <Font name="System Bold" size="16.0" />
+                    </font>
+                </Button>
+            <Button fx:id="uploadFile" disable="true" layoutX="183.0" layoutY="358.0" maxHeight="40.0" maxWidth="45.0" minHeight="40.0" minWidth="45.0" mnemonicParsing="false" onAction="#uploadFile" prefHeight="40.0" prefWidth="45.0" text="📄" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="184.0">
+               <font>
+                  <Font name="System Bold" size="16.0" />
+               </font>
+            </Button>
+            </children>
+        </AnchorPane>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
+            <children>
+                <TreeView fx:id="downloadsTree" prefHeight="200.0" prefWidth="200.0" showRoot="false" AnchorPane.bottomAnchor="41.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="35.0" />
+                <Button fx:id="pauseDownload" disable="true" maxHeight="40.0" maxWidth="45.0" minHeight="40.0" minWidth="45.0" mnemonicParsing="false" onAction="#pauseDownload" prefHeight="40.0" prefWidth="45.0" text="⏸" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+                    <font>
+                        <Font name="System Bold" size="18.0" />
+                    </font>
+                    <opaqueInsets>
+                        <Insets />
+                    </opaqueInsets>
+                    <padding>
+                        <Insets bottom="2.0" />
+                    </padding>
+                </Button>
+                <Button fx:id="removeDownload" disable="true" maxHeight="40.0" maxWidth="45.0" minHeight="40.0" minWidth="45.0" mnemonicParsing="false" onAction="#removeDownload" prefHeight="40.0" prefWidth="45.0" text="✖" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="46.0">
+                    <font>
+                        <Font name="System Bold" size="16.0" />
+                    </font>
+                </Button>
+                <Button fx:id="clearCompletedDownloads" disable="true" maxHeight="40.0" maxWidth="45.0" minHeight="40.0" minWidth="45.0" mnemonicParsing="false" onAction="#clearCompletedDownloads" prefHeight="40.0" prefWidth="45.0" text="✔" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="92.0">
+                    <font>
+                        <Font name="System Bold" size="16.0" />
+                    </font>
+                </Button>
+                <Button fx:id="openDownloadFolder" disable="true" maxHeight="40.0" maxWidth="45.0" minHeight="40.0" minWidth="45.0" mnemonicParsing="false" onAction="#openDownloadFolder" prefHeight="40.0" prefWidth="45.0" text="📂" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="138.0">
+                    <font>
+                        <Font name="System Bold" size="16.0" />
+                    </font>
+                </Button>
+                <Label alignment="BOTTOM_CENTER" layoutX="-10.0" layoutY="34.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Downloads" textAlignment="CENTER" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <font>
+                        <Font size="20.0" />
+                    </font>
+                </Label>
+            </children>
+        </AnchorPane>
+    </items>
+</SplitPane>
