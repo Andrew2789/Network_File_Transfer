@@ -102,7 +102,7 @@ public class TransferControlThread extends SocketThread {
 			recvSubfolders(newReceivable, children);
 		}
 		synchronized (bodyController.getDownloads()) {
-			bodyController.getDownloads().add(newReceivable.receivableToDownload(id));
+			bodyController.getDownloads().add(newReceivable.toDownload(id));
 			System.out.println("Finished receiving " + newReceivable.getName());
 		}
         readThread.startTransfer();

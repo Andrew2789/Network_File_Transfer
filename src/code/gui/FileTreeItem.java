@@ -29,14 +29,6 @@ public class FileTreeItem extends TreeItem {
 	private String path = null;
 	private double progress;
 
-
-/*	public FileTreeItem(File file, long size) {
-		super(String.format("%s %s - %s", file.isDirectory() ? folderSymbol : fileSymbol, generate3SFSizeString(size), file.getName()));
-		name = file.getName();
-		this.size = size;
-		folder = file.isDirectory();
-	}*/
-
 	/**
 	 * Constructor for a sendable tree item from a File object
 	 * @param file 		The file/folder to construct a sendable tree item from
@@ -47,7 +39,7 @@ public class FileTreeItem extends TreeItem {
 		setValue(new ProgressTreeCell(String.format("%s %s - %s", file.isDirectory() ? folderSymbol : fileSymbol, generate3SFSizeString(size), file.getName()), this));
 		name = file.getName();
 		this.size = size;
-		path = file.getAbsolutePath();
+		path = htonPath(file.getAbsolutePath());
 		folder = file.isDirectory();
 	}
 
@@ -91,7 +83,7 @@ public class FileTreeItem extends TreeItem {
 		super(String.format("%s %s - %s", file.isDirectory() ? folderSymbol : fileSymbol, generate3SFSizeString(size), file.getName()));
 		name = file.getName();
 		this.size = size;
-		path = file.getAbsolutePath();
+		path = htonPath(file.getAbsolutePath());
 		folder = file.isDirectory();
 		this.id = id;
 	}
@@ -198,22 +190,6 @@ public class FileTreeItem extends TreeItem {
 		return pathFromRoot;
 	}
 
-	/*
-	public void updateProgress() {
-		if (folder) {
-			double progress = 0;
-			FileTreeItem childItem;
-			for (Object child : getChildren()) {
-				childItem = (FileTreeItem) child;
-				if (childItem.isFolder()) {
-					childItem.updateProgress();
-				}
-				progress += ((double) childItem.getSize()) / size * childItem.getProgress();
-			}
-			setProgress(progress);
-		}
-	}*/
-
 	public void updateProgress(LinkedList<FileTreeItem> childPath) {
 		if (folder) {
 			double progress = 0;
@@ -243,7 +219,7 @@ public class FileTreeItem extends TreeItem {
 	 * Make a new download item from a receivable
 	 * @return A new download root tree item
 	 */
-	public FileTreeItem receivableToDownload(int id) {
+	public FileTreeItem toDownload(int id) {
 		FileTreeItem nextParent = this;
 		LinkedList<String> pathString = new LinkedList<>();
 		pathString.add(nextParent.getName());
@@ -260,58 +236,20 @@ public class FileTreeItem extends TreeItem {
 		return copy;
 	}
 
-	/**
-	 * Make new upload item from a sendable id path
-	 * @return A new upload root tree item
-	 */
-	public static FileTreeItem idPathToUpload(String path, int uploadId, ObservableList sendables) {
-		String[] pathComponents = path.split("//");
-		int sendableId = Integer.parseInt(pathComponents[0]);
-		LinkedList<String> pathComponentsList = new LinkedList<>(Arrays.asList(pathComponents[1].split("/")));
-		pathComponentsList.removeFirst();
-		FileTreeItem rootItem = null;
-		FileTreeItem childItem;
-		synchronized (sendables) {
-			for (Object rootSendable : sendables) {
-				rootItem = (FileTreeItem) rootSendable;
-				if (rootItem.getId() == sendableId) {
-					break;
-				}
-			}
-			if (rootItem == null) {
-				throw new IllegalStateException("Could not find sendable with ID " + sendableId);
-			}
-			childItem = rootItem;
-			boolean found;
-			for (String pathComponent: pathComponentsList) {
-				found = false;
-				for (Object child : childItem.getChildren()) {
-					if (((FileTreeItem) child).getName().equals(pathComponent)) {
-						childItem = ((FileTreeItem) child);
-						found = true;
-						break;
-					}
-				}
-				if (!found) {
-					throw new IllegalStateException("Sendable path not mappable to sendable.");
-				}
-			}
-		}
-		String rootPath;
-		if (pathComponentsList.size() > 0) {
-			pathComponentsList.removeLast();
-			rootPath = rootItem.getPath() + String.join(File.separator, pathComponentsList);
-		}
-		else {
-			LinkedList rootPathList = new LinkedList<>(Arrays.asList(rootItem.getPath().split(Pattern.quote(File.separator))));
-			rootPathList.removeLast();
-			rootPath = String.join(File.separator, rootPathList);
-		}
-		FileTreeItem copy;
-		copy = new FileTreeItem(childItem.getDisplayName(), childItem.getName(), childItem.getSize(), childItem.isFolder(), uploadId, rootPath);
-		copySubfolders(copy, childItem, rootPath);
-		return copy;
-	}
+    /**
+     * Make new upload item from a sendable id path
+     * @return A new upload root tree item
+     */
+    public FileTreeItem toUpload() {
+        FileTreeItem copy;
+        System.out.println(getPath());
+        LinkedList<String> pathComponents = new LinkedList<>(Arrays.asList(getPath().split(File.pathSeparator)));
+        pathComponents.removeLast();
+        String path = String.join(File.pathSeparator, pathComponents);
+        copy = new FileTreeItem(getDisplayName(), getName(), getSize(), isFolder(), getId(), getPath());
+        copySubfolders(copy, this, path);
+        return copy;
+    }
 
 	/**
 	 * Copy subfolders of original to copy object
@@ -346,4 +284,12 @@ public class FileTreeItem extends TreeItem {
 		String unit = fileSizeUnits[(sizeLength-1) / 3];
 		return String.format("%.3G%s", doubleSize, unit);
 	}
+
+	public static String ntohPath(String path) {
+        return String.join(File.pathSeparator, path.split("/"));
+    }
+
+    public static String htonPath(String path) {
+        return String.join("/", path.split(File.pathSeparator));
+    }
 }

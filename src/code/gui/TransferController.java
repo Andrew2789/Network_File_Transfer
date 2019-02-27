@@ -112,7 +112,7 @@ public class TransferController implements Initializable {
         File selected = chooser.showDialog(Main.getStage());
         if (selected != null) {
             FileTreeItem newItem = getSubfolder(selected, true);
-            uploadsTree.getRoot().getChildren().add(newItem);
+            uploadsTree.getRoot().getChildren().add(newItem.toUpload());
         }
         Main.sendableAdded();
     }
@@ -123,7 +123,7 @@ public class TransferController implements Initializable {
         File selected = chooser.showOpenDialog(Main.getStage());
         if (selected != null) {
             FileTreeItem newItem = getSubfolder(selected, true);
-            uploadsTree.getRoot().getChildren().add(newItem);
+            uploadsTree.getRoot().getChildren().add(newItem.toUpload());
         }
         Main.sendableAdded();
     }
