@@ -1,5 +1,6 @@
 package code.gui;
 
+import code.network.Main;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
@@ -17,5 +18,12 @@ public class LogController {
                 log.setText(log.getText() + "\n" + message);
             }
         });
+        if (!Main.isConnected()) {
+            updateConnectionLog();
+        }
+    }
+
+    public void updateConnectionLog() {
+        Main.connection.setLog(log.getText());
     }
 }

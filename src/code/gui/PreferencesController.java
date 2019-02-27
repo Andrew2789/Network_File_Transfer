@@ -1,21 +1,36 @@
 package code.gui;
 
 import code.network.Main;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.stage.DirectoryChooser;
 
-import javax.swing.*;
 import java.io.File;
 
 public class PreferencesController {
     @FXML
     private TextField downloadPathInput;
 
+    private String path = "Downloads";
+
+    private BodyController parent;
+
     public String getDownloadPath() {
-        return downloadPathInput.getText();
+        return path;
+    }
+
+    public void setParent(BodyController parent) {
+        this.parent = parent;
+    }
+
+    public void lockDownloadPath(boolean lock) {
+        path = downloadPathInput.getText();
+        Platform.runLater(() -> downloadPathInput.setDisable(lock));
+    }
+
+    public void disconnect() {
+        parent.confirmDisconnect();
     }
 
     public void chooseNewDownloadPath() {

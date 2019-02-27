@@ -50,7 +50,7 @@ public class TransferController implements Initializable {
         }
         FileTreeItem newItem;
         if (root)
-            newItem = new FileTreeItem(folder, size, Main.getNextSendableRootId());
+            newItem = new FileTreeItem(folder, size, Main.getNextUploadId());
         else
             newItem = new FileTreeItem(folder, size);
 

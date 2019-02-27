@@ -1,33 +1,33 @@
 package code.network;
 
-import code.gui.FileTreeItem;
 import code.gui.BodyController;
+import code.gui.FileTreeItem;
+import javafx.collections.ObservableList;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.LinkedList;
-import javafx.collections.ObservableList;
 
 public class TransferControlThread extends SocketThread {
 	private boolean sendablesAdded = true, sendablesRemoved = false;
-	private int nextSendableId = 0;
+	private int nextUploadId = 0;
     private final LinkedList<Integer> removedSendables = new LinkedList<>();
-	private BodyController bodyController;
+	private BodyController gui;
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
 
     private TransferThread writeThread = null, readThread = null;
 
-	TransferControlThread(String ipAddress, int port, RunnableReporter onFail, Runnable onSuccess, Runnable onDisconnect, BodyController bodyController) {
+	TransferControlThread(String ipAddress, int port, RunnableReporter onFail, Runnable onSuccess, Runnable onDisconnect, BodyController gui) {
 		super(ipAddress, 2, port, onFail, onSuccess, onDisconnect);
-		this.bodyController = bodyController;
+		this.gui = gui;
 	}
 
-	TransferControlThread(int port, RunnableReporter onFail, Runnable onSuccess, Runnable onServerCreation, Runnable onDisconnect, BodyController bodyController) {
+	TransferControlThread(int port, RunnableReporter onFail, Runnable onSuccess, Runnable onServerCreation, Runnable onDisconnect, BodyController gui) {
 		super(port, 2, onFail, onSuccess, onServerCreation, onDisconnect);
-        this.bodyController = bodyController;
+        this.gui = gui;
 	}
 
 	public boolean writeThreadActive() {
@@ -39,19 +39,19 @@ public class TransferControlThread extends SocketThread {
 	}
 
 	private void sendUploadNames() throws IOException {
-		if (bodyController.getUploads().size() == 0)
+		if (gui.getUploads().size() == 0)
 			return;
 
 		int treeIndex = 0;
-		synchronized (bodyController.getUploads()) {
-			ObservableList sendables = bodyController.getUploads();
-			int sendableLength = sendables.size();
-			while (((FileTreeItem) sendables.get(treeIndex)).getId() < nextSendableId && treeIndex < sendableLength) {
+		synchronized (gui.getUploads()) {
+			ObservableList uploads = gui.getUploads();
+			int uploadsLength = uploads.size();
+			while (((FileTreeItem) uploads.get(treeIndex)).getId() < nextUploadId && treeIndex < uploadsLength) {
 				treeIndex++;
 			}
 			FileTreeItem rootTreeItem;
-			while (treeIndex < sendableLength) {
-				rootTreeItem = (FileTreeItem) sendables.get(treeIndex);
+			while (treeIndex < uploadsLength) {
+				rootTreeItem = (FileTreeItem) uploads.get(treeIndex);
 				outputStream.writeInt(1); //opcode
 				//root node info
 				outputStream.writeInt(rootTreeItem.getId());
@@ -64,9 +64,9 @@ public class TransferControlThread extends SocketThread {
 					sendSubfolders(rootTreeItem);
 				}
 				treeIndex++;
-				System.out.println("Finished sending " + rootTreeItem.getName());
+				gui.addLogMessage("Finished sending " + rootTreeItem.getName());
 			}
-			nextSendableId = ((FileTreeItem) sendables.get(treeIndex-1)).getId() + 1;
+			nextUploadId = ((FileTreeItem) uploads.get(treeIndex-1)).getId() + 1;
 		}
 		sendablesAdded = false;
         writeThread.startTransfer();
@@ -74,10 +74,10 @@ public class TransferControlThread extends SocketThread {
 
 	private void sendSubfolders(FileTreeItem parent) throws IOException {
 		FileTreeItem currentItem;
-		System.out.println(String.format("Sending folder %s subitems %d", parent.getName(), parent.getChildren().size()));
+		gui.addLogMessage(String.format("Sending folder %s subitems %d", parent.getName(), parent.getChildren().size()));
 		for (Object child : parent.getChildren()) {
 			currentItem = (FileTreeItem) child;
-			System.out.println(String.format("Sending subitem %s from %s", currentItem.getName(), parent.getName()));
+			gui.addLogMessage(String.format("Sending subitem %s from %s", currentItem.getName(), parent.getName()));
 			outputStream.writeBoolean(currentItem.isFolder());
 			outputStream.writeUTF(currentItem.getDisplayName());
 			outputStream.writeUTF(currentItem.getName());
@@ -101,9 +101,9 @@ public class TransferControlThread extends SocketThread {
 			int children = inputStream.readInt();
 			recvSubfolders(newReceivable, children);
 		}
-		synchronized (bodyController.getDownloads()) {
-			bodyController.getDownloads().add(newReceivable.toDownload(id));
-			System.out.println("Finished receiving " + newReceivable.getName());
+		synchronized (gui.getDownloads()) {
+			gui.getDownloads().add(newReceivable.toDownload(id));
+			gui.addLogMessage("Finished receiving " + newReceivable.getName());
 		}
         readThread.startTransfer();
 	}
@@ -114,14 +114,14 @@ public class TransferControlThread extends SocketThread {
 		long size;
 		int children;
 		FileTreeItem newItem;
-		System.out.println(String.format("Receiving folder %s subitems %d", parent.getName(), fileCount));
+		gui.addLogMessage(String.format("Receiving folder %s subitems %d", parent.getName(), fileCount));
 		for (int i = 0; i < fileCount; i++) {
 			folder = inputStream.readBoolean();
 			displayName = inputStream.readUTF();
 			name = inputStream.readUTF();
 			size = inputStream.readLong();
 			newItem = new FileTreeItem(displayName, name, size, folder);
-			System.out.println(String.format("Receiving subitem %s from %s", newItem.getName(), parent.getName()));
+			gui.addLogMessage(String.format("Receiving subitem %s from %s", newItem.getName(), parent.getName()));
 			if (folder) {
 				children = inputStream.readInt();
 				recvSubfolders(newItem, children);
@@ -142,11 +142,11 @@ public class TransferControlThread extends SocketThread {
 	private void recvRemovedDownloads() throws IOException {
 		FileTreeItem childItem;
 		int id = inputStream.readInt();
-		synchronized (bodyController.getDownloads()) {
-			for (Object child: bodyController.getDownloads()) {
+		synchronized (gui.getDownloads()) {
+			for (Object child: gui.getDownloads()) {
 				childItem = (FileTreeItem)child;
 				if (childItem.getId() == id) {
-					bodyController.getDownloads().remove(childItem);
+					gui.getDownloads().remove(childItem);
 					break;
 				}
 			}
@@ -155,14 +155,14 @@ public class TransferControlThread extends SocketThread {
 
 	@Override
 	void afterConnection() throws IOException {// CHANGE THIS LATER! if the connection dies, this should not be caught and this thread should terminate
-		System.out.println("Transfer control thread connected");
+		gui.addLogMessage("Transfer control thread connected");
 		inputStream = clientSockets.get(0).in;
 		outputStream = clientSockets.get(0).out;
-		/*outputStream.writeUTF(bodyController.getNickname());
-		bodyController.setPeerNickname(inputStream.readUTF());*/
-        writeThread = new TransferThread(clientSockets.get(1), () -> {}, true, bodyController);
+		/*outputStream.writeUTF(gui.getNickname());
+		gui.setPeerNickname(inputStream.readUTF());*/
+        writeThread = new TransferThread(clientSockets.get(1), () -> {}, true, gui);
         writeThread.start();
-        readThread = new TransferThread(clientSockets.get(1), () -> {}, false, bodyController);
+        readThread = new TransferThread(clientSockets.get(1), () -> {}, false, gui);
         readThread.start();
 
 		int opCode;
@@ -192,12 +192,12 @@ public class TransferControlThread extends SocketThread {
 					}
                     clientSockets.get(0).socket.setSoTimeout(checkTimeout);
 				} catch (IOException e) {
-					e.printStackTrace();
+					gui.addLogStackTrace(e);
 				}
 			} catch (SocketTimeoutException e) {
 			}
 		}
-		System.out.println("Exiting transfer control thread");
+		gui.addLogMessage("Exiting transfer control thread");
 	}
 
 	void sendableAdded() {

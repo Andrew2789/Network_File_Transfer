@@ -5,9 +5,10 @@ import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 
 import java.io.PrintWriter;
@@ -45,13 +46,9 @@ public class ConnectionController implements Initializable {
         }
     }
 
-    public void addLogMessage(String message) {
+    public void setLog(String logText) {
         Platform.runLater(() -> {
-            if (log.getText().isEmpty()) {
-                log.setText(message);
-            } else {
-                log.setText(log.getText() + "\n" + message);
-            }
+            log.setText(logText);
         });
     }
 
@@ -62,25 +59,18 @@ public class ConnectionController implements Initializable {
 
         Main.clientTransferThreads(ipAddress, port,
                 (e) -> {
-                    addLogMessage("Failed to connect.");
-                    StringWriter sw = new StringWriter();
-                    e.printStackTrace(new PrintWriter(sw));
-                    addLogMessage(sw.toString());
+                    Main.body.addLogMessage("Failed to connect.");
+                    Main.body.addLogStackTrace(e);
                     setControlsDisabled(false);},
                 () -> {
-                    addLogMessage("Successfully connected.");
+                    Main.body.addLogMessage("Successfully connected.");
                     Main.connected();
                     setControlsDisabled(false);},
                 () -> {
-                    addLogMessage("Disconnected.");
+                    Main.body.addLogMessage("Disconnected.");
+                    Main.disconnected();
                     setControlsDisabled(false);
                 });
-        /*if (Main.clientTransferThreads(nameInput.getCharacters().toString(), ipAddress, port)) {
-            Main.showGame();
-        } else {
-            errorLabel.setText("Error: Failed to connect");
-            errorLabel.setVisible(true);
-        }*/
     }
 
     public void hostClicked() {
@@ -89,32 +79,19 @@ public class ConnectionController implements Initializable {
 
         Main.hostTransferThreads(port,
                 (e) -> {
-                    addLogMessage("Failed to listen.");
-                    StringWriter sw = new StringWriter();
-                    e.printStackTrace(new PrintWriter(sw));
-                    addLogMessage(sw.toString());
+                    Main.body.addLogMessage("Failed to listen.");
+                    Main.body.addLogStackTrace(e);
                     setControlsDisabled(false);},
                 () -> {
-                    addLogMessage("Successfully connected.");
+                    Main.body.addLogMessage("Successfully connected.");
                     Main.connected();
                     setControlsDisabled(false);},
-                () -> addLogMessage("Server created, listening..."),
+                () -> Main.body.addLogMessage("Server created, listening..."),
                 () -> {
-                    addLogMessage("Disconnected.");
+                    Main.body.addLogMessage("Disconnected.");
+                    Main.disconnected();
                     setControlsDisabled(false);
                 });
-        /*if (!Main.createServer(port)) {
-            errorLabel.setText("Error: Failed to host");
-            errorLabel.setVisible(true);
-        }
-
-            if (!Main.joinGame(nameInput.getCharacters().toString(), "127.0.0.1", port)) {
-                errorLabel.setText("Error: Hosted, but failed to connect");
-                errorLabel.setVisible(true);
-                Main.killThreads();
-            }
-
-        Main.showGameSetup();*/
     }
 
     private boolean updatePortField(String newValue) {
@@ -160,6 +137,8 @@ public class ConnectionController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        Main.connection = this;
+
         ipInput.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 if (clientConnectReady()) {

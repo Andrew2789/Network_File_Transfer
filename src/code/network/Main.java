@@ -1,6 +1,7 @@
 package code.network;
 
 import code.gui.BodyController;
+import code.gui.ConnectionController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -16,12 +17,14 @@ import java.net.URISyntaxException;
 public class Main extends Application {
     private static TransferControlThread transferControlThread = null;
     private static String location;
-    private static int nextSendableRootId = -1;
+    private static int nextUploadId = -1;
+    private static boolean connected = false;
 
     private static Stage stage;
     private static Scene scene;
     private static Parent bodyScene, connectionScene;
-    private static BodyController bodyController;
+    public static BodyController body;
+    public static ConnectionController connection;
 
     public static Stage getStage() {
         return stage;
@@ -31,23 +34,26 @@ public class Main extends Application {
     	return location;
 	}
 
-    public static void setBodyController(BodyController bodyController) {
-        Main.bodyController = bodyController;
+    public static boolean isConnected() {
+        return connected;
     }
 
     public static void connected() {
+        connected = true;
         Platform.runLater(() -> scene.setRoot(bodyScene));
     }
 
     public static void disconnected() {
+        connected = false;
         Platform.runLater(() -> scene.setRoot(connectionScene));
+        body.updateConnectionLog();
     }
 
     public static void clientTransferThreads(String ip, int port, RunnableReporter onFail, Runnable onSuccess, Runnable onDisconnect) {
         if (transferControlThread != null) {
             killTransferThreads();
         }
-        transferControlThread = new TransferControlThread(ip, port, onFail, onSuccess, onDisconnect, bodyController);
+        transferControlThread = new TransferControlThread(ip, port, onFail, onSuccess, onDisconnect, body);
         transferControlThread.start();
     }
 
@@ -55,7 +61,7 @@ public class Main extends Application {
         if (transferControlThread != null) {
             killTransferThreads();
         }
-        transferControlThread = new TransferControlThread(port, onFail, onSuccess, onServerCreation, onDisconnect, bodyController);
+        transferControlThread = new TransferControlThread(port, onFail, onSuccess, onServerCreation, onDisconnect, body);
         transferControlThread.start();
     }
 
@@ -66,9 +72,9 @@ public class Main extends Application {
         transferControlThread = null;
     }
 
-    public static int getNextSendableRootId() {
-		nextSendableRootId++;
-        return nextSendableRootId;
+    public static int getNextUploadId() {
+		nextUploadId++;
+        return nextUploadId;
     }
 
     public static void sendableAdded() {
@@ -98,7 +104,7 @@ public class Main extends Application {
         stage.setTitle("Network File Transfer");
         stage.getIcons().add(new Image(getClass().getResourceAsStream("/resources/image/wateryarrow.png")));
         try {
-            connectionScene =FXMLLoader.load(getClass().getResource("/resources/fxml/connection.fxml"));
+            connectionScene = FXMLLoader.load(getClass().getResource("/resources/fxml/connection.fxml"));
             bodyScene = FXMLLoader.load(getClass().getResource("/resources/fxml/body.fxml"));
 			location = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile().getAbsolutePath();
 			scene = new Scene(connectionScene, 1280, 720);

@@ -1,11 +1,11 @@
 package code.gui;
 
+import javafx.scene.control.TreeItem;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
-import javafx.collections.ObservableList;
-import javafx.scene.control.TreeItem;
 
 /**
  * @author Andrew Davidson (a.n.d.9489@gmail.com)
@@ -84,8 +84,6 @@ public class FileTreeItem extends TreeItem {
 		name = file.getName();
 		this.size = size;
 		path = htonPath(file.getAbsolutePath());
-		System.out.println(file.getAbsolutePath());
-		System.out.println(path);
 		folder = file.isDirectory();
 		this.id = id;
 	}

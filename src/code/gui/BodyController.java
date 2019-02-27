@@ -5,14 +5,16 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.SplitPane;
 import javafx.scene.layout.GridPane;
 
-import javax.swing.*;
-import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
-import java.util.LinkedList;
 import java.util.ResourceBundle;
 
 public class BodyController implements Initializable {
@@ -63,6 +65,14 @@ public class BodyController implements Initializable {
 		bg.requestFocus();
 	}
 
+	public void updateConnectionLog() {
+	    logController.updateConnectionLog();
+    }
+
+    public void lockDownloadPath(boolean lock) {
+        preferencesController.lockDownloadPath(lock);
+    }
+
 	public void showLogsChanged() {
 		if (showLogs.isSelected()) {
 			logsDivider.setDividerPosition(0, 0.7);
@@ -71,7 +81,7 @@ public class BodyController implements Initializable {
 		}
 	}
 
-	public void disconnectClicked() {
+	public void confirmDisconnect() {
 		Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to disconnect?", ButtonType.YES, ButtonType.NO);
 		alert.showAndWait();
 
@@ -87,6 +97,8 @@ public class BodyController implements Initializable {
 
 			uploadStopped();
 			downloadStopped();
+
+			Main.disconnected();
 		});
 	}
 
@@ -94,7 +106,14 @@ public class BodyController implements Initializable {
 		logController.addLogMessage(message);
 	}
 
+	public void addLogStackTrace(Exception e) {
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        addLogMessage(sw.toString());
+    }
+
 	public void initialize(URL location, ResourceBundle resources) {
-		Main.setBodyController(this);
+		Main.body = this;
+		preferencesController.setParent(this);
 	}
 }

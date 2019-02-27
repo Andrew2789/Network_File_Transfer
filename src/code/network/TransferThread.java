@@ -1,28 +1,24 @@
 package code.network;
 
-import code.gui.FileTreeItem;
 import code.gui.BodyController;
+import code.gui.FileTreeItem;
+import javafx.collections.ObservableList;
 
 import java.io.*;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
-
-import javafx.collections.ObservableList;
 
 public class TransferThread extends SocketThread {
 	private static final int progressBarRefreshTime = 100, transferSpeedRefreshFreq = 5, chunkSize = 65536;
 	private boolean active = false;
 	private boolean writing;
-    private BodyController bodyController;
+    private BodyController gui;
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
 
-	TransferThread(ClientSocket clientSocket, Runnable onDisconnect, boolean writing, BodyController bodyController) {
+	TransferThread(ClientSocket clientSocket, Runnable onDisconnect, boolean writing, BodyController gui) {
 		super(Collections.singletonList(clientSocket), onDisconnect);
-        this.bodyController = bodyController;
+        this.gui = gui;
 		this.writing = writing;
 	}
 
@@ -31,16 +27,23 @@ public class TransferThread extends SocketThread {
 	}
 
 	public void startTransfer() {
-		active = true;
+		setActive(true);
 	}
+
+	private void setActive(boolean active) {
+	    this.active = active;
+	    if (!writing) {
+            gui.lockDownloadPath(active);
+        }
+    }
 
 	private LinkedList<FileTreeItem> readNextInQueue() {
 		LinkedList<FileTreeItem> toTransfer;
 		ObservableList tree;
 		if (writing) {
-			tree = bodyController.getUploads();
+			tree = gui.getUploads();
 		} else {
-			tree = bodyController.getDownloads();
+			tree = gui.getDownloads();
 		}
 		synchronized (tree) {
 			int rootIndex = 0;
@@ -50,11 +53,11 @@ public class TransferThread extends SocketThread {
 				rootIndex++;
 			} while (nextItem.getProgress() != 0 && rootIndex < tree.size());
 			if (rootIndex == tree.size() && nextItem.getProgress() != 0) {
-				active = false;
+				setActive(false);
 				return null;
 			}
 			toTransfer = new LinkedList<>();
-			System.out.println("Read this root from queue: " + FileTreeItem.ntohPath(nextItem.getPath()) + File.separatorChar + nextItem.getName());
+			gui.addLogMessage("Read this root from queue: " + FileTreeItem.ntohPath(nextItem.getPath()) + File.separatorChar + nextItem.getName());
 			addSubfolders(nextItem, toTransfer);
 		}
 		return toTransfer;
@@ -84,7 +87,7 @@ public class TransferThread extends SocketThread {
 		long totalRead, currentTime, lastRefresh;
 		long readSinceLastUpdate = 0, lastSpeedUpdate = System.currentTimeMillis();
 		for (FileTreeItem file : toTransfer) {
-			System.out.println("Beginning upload of " + file.getName());
+			gui.addLogMessage("Beginning upload of " + file.getName());
 			try {
 				if (file.isFolder()) {
 					if (file.getChildren().size() == 0) {
@@ -109,7 +112,7 @@ public class TransferThread extends SocketThread {
 
 						currentTime = System.currentTimeMillis();
 						if (currentTime - lastSpeedUpdate > progressBarRefreshTime*transferSpeedRefreshFreq) {
-							bodyController.updateUploadSpeed((long)(readSinceLastUpdate/(((double)(currentTime - lastSpeedUpdate))/1000)));
+							gui.updateUploadSpeed((long)(readSinceLastUpdate/(((double)(currentTime - lastSpeedUpdate))/1000)));
 							readSinceLastUpdate = 0;
 							lastSpeedUpdate = currentTime;
 						}
@@ -123,13 +126,12 @@ public class TransferThread extends SocketThread {
 					fileInputStream.close();
 				}
 			} catch (FileNotFoundException e) {
-				System.err.println("File not found!");
-				e.printStackTrace();
+                gui.addLogMessage("File not found!");
+                gui.addLogStackTrace(e);
 			}
 		}
-		System.out.println("Upload complete");
-		bodyController.uploadStopped();
-		//toTransfer.getFirst().updateProgress();
+		gui.addLogMessage("Upload complete");
+		gui.uploadStopped();
 	}
 
 	private void downloadNext(byte[] buffer) throws IOException {
@@ -139,7 +141,7 @@ public class TransferThread extends SocketThread {
 			return;
 		}
 
-		String downloadPath = bodyController.getDownloadPath();
+		String downloadPath = gui.getDownloadPath();
 		File newFolder;
 		boolean rootIsFile = false;
 		if (toTransfer.getFirst().isFolder()) {
@@ -159,7 +161,7 @@ public class TransferThread extends SocketThread {
 		long totalRead, currentTime, lastRefresh;
 		long readSinceLastUpdate = 0, lastSpeedUpdate = System.currentTimeMillis();
 		for (FileTreeItem file : toTransfer) {
-			System.out.println("Beginning download of " + file.getName());
+			gui.addLogMessage("Beginning download of " + file.getName());
 			try {
 				if (rootIsFile) {
 					fullPath = downloadPath + File.separatorChar + file.getName();
@@ -168,7 +170,6 @@ public class TransferThread extends SocketThread {
 				}
 				if (file.isFolder()) {
 					newFolder = new File(fullPath);
-					System.out.println(newFolder.getAbsolutePath() + newFolder.exists());
 					if (!newFolder.mkdirs() && !newFolder.exists()) {
 						throw new SecurityException("Unable to make dir " + newFolder.getAbsolutePath());
 					}
@@ -194,7 +195,7 @@ public class TransferThread extends SocketThread {
 
 						currentTime = System.currentTimeMillis();
 						if (currentTime - lastSpeedUpdate > progressBarRefreshTime*transferSpeedRefreshFreq) {
-							bodyController.updateDownloadSpeed((long)(readSinceLastUpdate/((double)(currentTime - lastSpeedUpdate)/1000)));
+							gui.updateDownloadSpeed((long)(readSinceLastUpdate/((double)(currentTime - lastSpeedUpdate)/1000)));
 							readSinceLastUpdate = 0;
 							lastSpeedUpdate = currentTime;
 						}
@@ -208,25 +209,20 @@ public class TransferThread extends SocketThread {
 					fileOutputStream.close();
 				}
 			} catch (FileNotFoundException e) {
-				System.err.println("File not found!");
-				e.printStackTrace();
+                gui.addLogMessage("File not found!");
+				gui.addLogStackTrace(e);
 			}
 		}
-		System.out.println("Download complete");
-		bodyController.downloadStopped();
-		//root.updateProgress();
+		gui.addLogMessage("Download complete");
+		gui.downloadStopped();
 	}
 
 	@Override
 	void afterConnection() throws IOException, InterruptedException {
-		System.out.print("Transfer thread connected: ");
-		if (writing) {
-			System.out.println("Writing");
-		} else {
-			System.out.println("Reading");
-		}
+		gui.addLogMessage("Transfer thread connected: " + (writing ? "Writing" : "Reading"));
 		inputStream = clientSockets.get(0).in;
 		outputStream = clientSockets.get(0).out;
+        gui.lockDownloadPath(false);
 
 		clientSockets.get(0).socket.setSoTimeout(communicationTimeout);
 		byte[] buffer = new byte[chunkSize];
@@ -246,11 +242,6 @@ public class TransferThread extends SocketThread {
 			}
 		}
 
-		System.out.print("Exiting transfer thread: ");
-		if (writing) {
-			System.out.println("Writing");
-		} else {
-			System.out.println("Reading");
-		}
+        gui.addLogMessage("Exiting transfer thread: " + (writing ? "Writing" : "Reading"));
 	}
 }
