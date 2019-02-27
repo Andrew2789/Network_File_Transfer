@@ -43,7 +43,7 @@ public class Main extends Application {
         Platform.runLater(() -> scene.setRoot(connectionScene));
     }
 
-    public static void clientTransferThreads(String ip, int port, Runnable onFail, Runnable onSuccess, Runnable onDisconnect) {
+    public static void clientTransferThreads(String ip, int port, RunnableReporter onFail, Runnable onSuccess, Runnable onDisconnect) {
         if (transferControlThread != null) {
             killTransferThreads();
         }
@@ -51,7 +51,7 @@ public class Main extends Application {
         transferControlThread.start();
     }
 
-    public static void hostTransferThreads(int port, Runnable onFail, Runnable onSuccess, Runnable onServerCreation, Runnable onDisconnect) {
+    public static void hostTransferThreads(int port, RunnableReporter onFail, Runnable onSuccess, Runnable onServerCreation, Runnable onDisconnect) {
         if (transferControlThread != null) {
             killTransferThreads();
         }

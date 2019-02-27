@@ -54,7 +54,7 @@ public class TransferThread extends SocketThread {
 				return null;
 			}
 			toTransfer = new LinkedList<>();
-			System.out.println("Read this root from queue: " + nextItem.getPath() + File.separatorChar + nextItem.getName());
+			System.out.println("Read this root from queue: " + FileTreeItem.ntohPath(nextItem.getPath()) + File.separatorChar + nextItem.getName());
 			addSubfolders(nextItem, toTransfer);
 		}
 		return toTransfer;
@@ -91,7 +91,7 @@ public class TransferThread extends SocketThread {
 						updateProgress(1, file, toTransfer.getFirst());
 					}
 				} else {
-					fileInputStream = new FileInputStream(String.join(File.separator, file.getPath().split("/")) + File.separatorChar + file.getName());
+					fileInputStream = new FileInputStream(FileTreeItem.ntohPath(file.getPath()) + File.separatorChar + file.getName());
 					totalRead = 0;
 					lastRefresh = System.currentTimeMillis();
 					while (totalRead < file.getSize()) {
@@ -164,7 +164,7 @@ public class TransferThread extends SocketThread {
 				if (rootIsFile) {
 					fullPath = downloadPath + File.separatorChar + file.getName();
 				} else {
-					fullPath = downloadPath + File.separatorChar + String.join(File.separator, file.getPath().split("/")) + File.separatorChar + file.getName();
+					fullPath = downloadPath + File.separatorChar + FileTreeItem.ntohPath(file.getPath()) + File.separatorChar + file.getName();
 				}
 				if (file.isFolder()) {
 					newFolder = new File(fullPath);

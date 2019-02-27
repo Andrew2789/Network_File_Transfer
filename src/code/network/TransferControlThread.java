@@ -20,12 +20,12 @@ public class TransferControlThread extends SocketThread {
 
     private TransferThread writeThread = null, readThread = null;
 
-	TransferControlThread(String ipAddress, int port, Runnable onFail, Runnable onSuccess, Runnable onDisconnect, BodyController bodyController) {
+	TransferControlThread(String ipAddress, int port, RunnableReporter onFail, Runnable onSuccess, Runnable onDisconnect, BodyController bodyController) {
 		super(ipAddress, 2, port, onFail, onSuccess, onDisconnect);
 		this.bodyController = bodyController;
 	}
 
-	TransferControlThread(int port, Runnable onFail, Runnable onSuccess, Runnable onServerCreation, Runnable onDisconnect, BodyController bodyController) {
+	TransferControlThread(int port, RunnableReporter onFail, Runnable onSuccess, Runnable onServerCreation, Runnable onDisconnect, BodyController bodyController) {
 		super(port, 2, onFail, onSuccess, onServerCreation, onDisconnect);
         this.bodyController = bodyController;
 	}

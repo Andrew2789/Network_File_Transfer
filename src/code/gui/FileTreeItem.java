@@ -84,6 +84,8 @@ public class FileTreeItem extends TreeItem {
 		name = file.getName();
 		this.size = size;
 		path = htonPath(file.getAbsolutePath());
+		System.out.println(file.getAbsolutePath());
+		System.out.println(path);
 		folder = file.isDirectory();
 		this.id = id;
 	}
@@ -241,13 +243,10 @@ public class FileTreeItem extends TreeItem {
      * @return A new upload root tree item
      */
     public FileTreeItem toUpload() {
-        FileTreeItem copy;
-        System.out.println(getPath());
-        LinkedList<String> pathComponents = new LinkedList<>(Arrays.asList(getPath().split(File.pathSeparator)));
+        LinkedList<String> pathComponents = new LinkedList<>(Arrays.asList(getPath().split("/")));
         pathComponents.removeLast();
-        String path = String.join(File.pathSeparator, pathComponents);
-        copy = new FileTreeItem(getDisplayName(), getName(), getSize(), isFolder(), getId(), getPath());
-        copySubfolders(copy, this, path);
+        FileTreeItem copy = new FileTreeItem(getDisplayName(), getName(), getSize(), isFolder(), getId(), getPath());
+        copySubfolders(copy, this, String.join(File.separator, pathComponents));
         return copy;
     }
 
@@ -286,10 +285,10 @@ public class FileTreeItem extends TreeItem {
 	}
 
 	public static String ntohPath(String path) {
-        return String.join(File.pathSeparator, path.split("/"));
+        return String.join(Pattern.quote(File.separator), path.split("/"));
     }
 
     public static String htonPath(String path) {
-        return String.join("/", path.split(File.pathSeparator));
+        return String.join("/", path.split(Pattern.quote(File.separator)));
     }
 }

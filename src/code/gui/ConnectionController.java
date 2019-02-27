@@ -7,11 +7,17 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class ConnectionController implements Initializable {
+    @FXML
+    private BorderPane bg;
     @FXML
     private TextField ipInput, clientPortInput, hostPortInput, nameInput;
     @FXML
@@ -20,6 +26,24 @@ public class ConnectionController implements Initializable {
     private TextArea log;
 
     private static final int PORT_MIN = 1024;
+
+    public void requestFocus() {
+        bg.requestFocus();
+    }
+
+    public void setControlsDisabled(boolean disable) {
+        ipInput.setDisable(disable);
+        clientPortInput.setDisable(disable);
+        hostPortInput.setDisable(disable);
+        nameInput.setDisable(disable);
+        if (disable) {
+            connectButton.setDisable(true);
+            hostButton.setDisable(true);
+        } else {
+            connectButton.setDisable(!clientConnectReady());
+            hostButton.setDisable(!hostListenReady());
+        }
+    }
 
     public void addLogMessage(String message) {
         Platform.runLater(() -> {
@@ -34,14 +58,23 @@ public class ConnectionController implements Initializable {
     public void connectClicked() {
         String ipAddress = ipInput.getCharacters().toString();
         int port = Integer.parseInt(clientPortInput.getCharacters().toString());
+        setControlsDisabled(true);
 
         Main.clientTransferThreads(ipAddress, port,
-                () -> addLogMessage("Failed to connect."),
+                (e) -> {
+                    addLogMessage("Failed to connect.");
+                    StringWriter sw = new StringWriter();
+                    e.printStackTrace(new PrintWriter(sw));
+                    addLogMessage(sw.toString());
+                    setControlsDisabled(false);},
                 () -> {
                     addLogMessage("Successfully connected.");
                     Main.connected();
-                },
-                () -> addLogMessage("Disconnected."));
+                    setControlsDisabled(false);},
+                () -> {
+                    addLogMessage("Disconnected.");
+                    setControlsDisabled(false);
+                });
         /*if (Main.clientTransferThreads(nameInput.getCharacters().toString(), ipAddress, port)) {
             Main.showGame();
         } else {
@@ -52,15 +85,24 @@ public class ConnectionController implements Initializable {
 
     public void hostClicked() {
         int port = Integer.parseInt(hostPortInput.getCharacters().toString());
+        setControlsDisabled(true);
 
         Main.hostTransferThreads(port,
-                () -> addLogMessage("Failed to connect."),
+                (e) -> {
+                    addLogMessage("Failed to listen.");
+                    StringWriter sw = new StringWriter();
+                    e.printStackTrace(new PrintWriter(sw));
+                    addLogMessage(sw.toString());
+                    setControlsDisabled(false);},
                 () -> {
                     addLogMessage("Successfully connected.");
                     Main.connected();
-                },
+                    setControlsDisabled(false);},
                 () -> addLogMessage("Server created, listening..."),
-                () -> addLogMessage("Disconnected."));
+                () -> {
+                    addLogMessage("Disconnected.");
+                    setControlsDisabled(false);
+                });
         /*if (!Main.createServer(port)) {
             errorLabel.setText("Error: Failed to host");
             errorLabel.setVisible(true);

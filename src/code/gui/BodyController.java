@@ -7,6 +7,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.GridPane;
 
 import javax.swing.*;
 import java.io.File;
@@ -15,6 +16,12 @@ import java.util.LinkedList;
 import java.util.ResourceBundle;
 
 public class BodyController implements Initializable {
+	@FXML
+	private GridPane bg;
+	@FXML
+	private CheckBox showLogs;
+	@FXML
+	private SplitPane logsDivider;
 	@FXML
 	private SpeedController speedController;
 	@FXML
@@ -52,6 +59,18 @@ public class BodyController implements Initializable {
 		speedController.updateDownloadSpeed(speed);
 	}
 
+	public void requestFocus() {
+		bg.requestFocus();
+	}
+
+	public void showLogsChanged() {
+		if (showLogs.isSelected()) {
+			logsDivider.setDividerPosition(0, 0.7);
+		} else {
+			logsDivider.setDividerPosition(0, 1);
+		}
+	}
+
 	public void disconnectClicked() {
 		Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to disconnect?", ButtonType.YES, ButtonType.NO);
 		alert.showAndWait();
@@ -69,6 +88,10 @@ public class BodyController implements Initializable {
 			uploadStopped();
 			downloadStopped();
 		});
+	}
+
+	public void addLogMessage(String message) {
+		logController.addLogMessage(message);
 	}
 
 	public void initialize(URL location, ResourceBundle resources) {

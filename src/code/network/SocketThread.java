@@ -8,7 +8,8 @@ import java.util.List;
 
 public abstract class SocketThread extends Thread {
 	private Thread t;
-    private Runnable onFail, onSuccess, onDisconnect, onServerCreation;
+	private RunnableReporter onFail;
+    private Runnable onSuccess, onDisconnect, onServerCreation;
 	private ServerSocket serverSocket = null;
     protected List<ClientSocket> clientSockets = new ArrayList<>();
 	protected static final int checkTimeout = 100, communicationTimeout = 10000;
@@ -25,7 +26,7 @@ public abstract class SocketThread extends Thread {
      * @param onSuccess A runnable to run if a connection is successfully established with the server.
      * @param onDisconnect A runnable to run when the socket connection is closed for whatever reason after previously being connected.
      */
-	public SocketThread(String ipAddress, int connections, int port, Runnable onFail, Runnable onSuccess, Runnable onDisconnect) {
+	public SocketThread(String ipAddress, int connections, int port, RunnableReporter onFail, Runnable onSuccess, Runnable onDisconnect) {
 		this.ipAddress = ipAddress;
 		this.connections = connections;
 		this.port = port;
@@ -43,7 +44,7 @@ public abstract class SocketThread extends Thread {
      * @param onSuccess A runnable to run if a connection is successfully established with the server.
      * @param onDisconnect A runnable to run when the socket connection is closed for whatever reason after previously being connected.
      */
-	public SocketThread(int port, int connections, Runnable onFail, Runnable onSuccess, Runnable onServerCreation, Runnable onDisconnect) {
+	public SocketThread(int port, int connections, RunnableReporter onFail, Runnable onSuccess, Runnable onServerCreation, Runnable onDisconnect) {
 		this.port = port;
 		this.connections = connections;
         this.onFail = onFail;
@@ -96,7 +97,8 @@ public abstract class SocketThread extends Thread {
                     clientSockets.add(new ClientSocket(socket));
                 }
 			} catch (IOException e) {
-				onFail.run();
+				e.printStackTrace();
+				onFail.run(e);
 				return false;
 			}
 		} else {
@@ -107,7 +109,7 @@ public abstract class SocketThread extends Thread {
                 onServerCreation.run();
 			} catch (IOException e) {
 				serverSocket = null;
-				onFail.run();
+				onFail.run(e);
 				return false;
 			}
 

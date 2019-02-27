@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="430.0" minWidth="480.0" prefHeight="720.0" prefWidth="1280.0" style="-fx-background-color: #142533;" stylesheets="@../css/darkblue.css" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.ConnectionController">
+<BorderPane fx:id="bg" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="430.0" minWidth="480.0" onMousePressed="#requestFocus" prefHeight="720.0" prefWidth="1280.0" style="-fx-background-color: #142533;" stylesheets="@../css/darkblue.css" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.ConnectionController">
    <center>
       <AnchorPane maxHeight="430.0" maxWidth="600.0" minHeight="430.0" minWidth="600.0" style="-fx-background-color: #1d3549; -fx-background-radius: 15px;">
          <children>
